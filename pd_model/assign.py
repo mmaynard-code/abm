@@ -70,17 +70,23 @@ def assign_agent_base_attributes(agent):
     Sets all base attributes for each agent
     This is run once during agent creation
     """
+    agent.steps = 0
+    agent.advances = 0
     agent.agent_id = None
     agent.network_id = None
     agent.group_id = None
     agent.player_id = None
+    agent.pd_game_opponent_1 = None
+    agent.pd_game_opponent_1_AgentID = None
+    agent.pd_game_opponent_1_pd_game_decision_1 = None
+    agent.pd_game_decision_1 = None
+    agent.pd_game_opponent_2 = None
+    agent.pd_game_opponent_2_AgentID = None
+    agent.pd_game_opponent_2_pd_game_decision_2 = None
+    agent.pd_game_decision_2 = None
     agent.payoff_1 = None
     agent.payoff_2 = None
     agent.payoff = 0
-    agent.pd_game_opponent_1 = None
-    agent.pd_game_opponent_1_AgentID = None
-    agent.pd_game_opponent_2 = None
-    agent.pd_game_opponent_2_AgentID = None
 
 
 def assign_agent_reputation_attributes(agent):

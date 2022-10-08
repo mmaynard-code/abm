@@ -1,7 +1,7 @@
 stage_lists_by_game_type = {
-    "random": ["step_start", "step_pd", "step_end"],
-    "reputation": ["step_start", "step_pd", "step_scoring", "step_end"],
-    "gossip": ["step_start", "step_pd", "step_scoring", "step_gossip", "step_update", "step_end"],
+    "random": ["step_start", "step_pd", "step_payoffs", "step_collect"],
+    "reputation": ["step_start", "step_pd", "step_payoffs", "step_scoring", "step_collect"],
+    "gossip": ["step_start", "step_pd", "step_payoffs", "step_scoring", "step_gossip", "step_update", "step_collect"],
 }
 
 scoring_distributions_by_payoff_result = {

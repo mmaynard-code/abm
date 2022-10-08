@@ -23,11 +23,6 @@ class SimpleAgent(mesa.Agent):
         assign_agent_base_attributes(self)
         assign_agent_reputation_attributes(self)
 
-    def pd_game(self):
-        self.get_pd_opponents()
-        self.get_pd_choices()
-        self.get_pd_payoffs()
-
     def get_pd_opponents(self):
         self.pd_game_opponent_1 = [
             agent
@@ -43,44 +38,38 @@ class SimpleAgent(mesa.Agent):
         self.pd_game_opponent_2_AgentID = self.pd_game_opponent_2.unique_id
 
     def set_pd_choices(self):
-        if self.model.schedule.steps > 0:
-            if self.model.game_type == "random":
-                self.decision_1 = random.choice(["Defect", "Cooperate"])
-                self.decision_2 = random.choice(["Defect", "Cooperate"])
-            elif self.model.game_type == "reputation":
-                opponent_1_reputation = getattr(self, "agent_" + str(self.pd_game_opponent_1.unique_id) + "_reputation")
-                opponent_2_reputation = getattr(self, "agent_" + str(self.pd_game_opponent_2.unique_id) + "_reputation")
-                self.decision_1 = random.choice(decision_distributions_by_score.get(opponent_1_reputation, None))
-                self.decision_2 = random.choice(decision_distributions_by_score.get(opponent_2_reputation, None))
-            elif self.model.game_type == "gossip" and self.payoff_1 is not None:
-                self.decision_1 = random.choice(["Defect", "Cooperate"])
-                self.decision_2 = random.choice(["Defect", "Cooperate"])
-        else:
-            self.decision_1 = None
-            self.decision_2 = None
+        if self.model.game_type == "random":
+            self.pd_game_decision_1 = random.choice(["Defect", "Cooperate"])
+            self.pd_game_decision_2 = random.choice(["Defect", "Cooperate"])
+        elif self.model.game_type == "reputation":
+            opponent_1_reputation = getattr(self, "agent_" + str(self.pd_game_opponent_1.unique_id) + "_reputation")
+            opponent_2_reputation = getattr(self, "agent_" + str(self.pd_game_opponent_2.unique_id) + "_reputation")
+            self.pd_game_decision_1 = random.choice(decision_distributions_by_score.get(opponent_1_reputation, None))
+            self.pd_game_decision_2 = random.choice(decision_distributions_by_score.get(opponent_2_reputation, None))
+        elif self.model.game_type == "gossip" and self.payoff_1 is not None:
+            self.pd_game_decision_1 = random.choice(["Defect", "Cooperate"])
+            self.pd_game_decision_2 = random.choice(["Defect", "Cooperate"])
 
     def get_pd_payoffs(self):
-        if self.model.schedule.steps > 0:
-            self.payoff_1 = int(payoff_matrix[self.decision_1][self.pd_game_opponent_1.decision_1])
-            self.payoff_2 = int(payoff_matrix[self.decision_2][self.pd_game_opponent_2.decision_2])
-            self.payoff += self.payoff_1 + self.payoff_2
+        self.pd_game_opponent_1_pd_game_decision_1 = self.pd_game_opponent_1.pd_game_decision_1
+        self.pd_game_opponent_2_pd_game_decision_2 = self.pd_game_opponent_1.pd_game_decision_2
+        self.payoff_1 = payoff_matrix[self.pd_game_decision_1][self.pd_game_opponent_1.pd_game_decision_1]
+        self.payoff_2 = payoff_matrix[self.pd_game_decision_2][self.pd_game_opponent_1.pd_game_decision_2]
+        self.payoff += self.payoff_1 + self.payoff_2
 
     def set_pd_scoring(self):
-        # if self.model.schedule.steps > 0:
-
         opponent_1_reputation = "agent_" + str(self.pd_game_opponent_1.unique_id) + "_reputation"
         opponent_2_reputation = "agent_" + str(self.pd_game_opponent_2.unique_id) + "_reputation"
-        if self.payoff_1 is not None:
-            setattr(
-                self,
-                opponent_1_reputation,
-                int(random.choice(scoring_distributions_by_payoff_result.get(self.payoff_1, None))),
-            )
-            setattr(
-                self,
-                opponent_2_reputation,
-                int(random.choice(scoring_distributions_by_payoff_result.get(self.payoff_2, None))),
-            )
+        setattr(
+            self,
+            opponent_1_reputation,
+            int(random.choice(scoring_distributions_by_payoff_result.get(self.payoff_1, None))),
+        )
+        setattr(
+            self,
+            opponent_2_reputation,
+            int(random.choice(scoring_distributions_by_payoff_result.get(self.payoff_2, None))),
+        )
 
     def step_start(self):
         assign_random_group_id(self.model)
@@ -90,18 +79,17 @@ class SimpleAgent(mesa.Agent):
         self.get_pd_opponents()
         self.set_pd_choices()
 
+    def step_payoffs(self):
+        self.get_pd_payoffs()
+
     def step_scoring(self):
         self.set_pd_scoring()
 
-    def step_end(self):
-        self.get_pd_payoffs()
+    def step_gossip(self):
+        self.set_gossip_choices()
 
-    def step(self):
-        self.get_pd_opponents()
-        self.set_pd_choices()
-        if self.model.game_type in ["reputation", "gossip"]:
-            self.set_pd_scoring()
-        self.get_pd_payoffs()
+    def step_collect(self):
+        self.model.datacollector.collect(self.model)
 
 
 class SimpleModel(mesa.Model):
@@ -112,6 +100,7 @@ class SimpleModel(mesa.Model):
         self.total_networks = total_networks
         self.game_type = game_type
         self.schedule = mesa.time.StagedActivation(self, stage_list=stage_lists_by_game_type[game_type])
+        # self.schedule = mesa.time.SimultaneousActivation(self)
         self.running = True
         # Create agents
 
@@ -127,5 +116,5 @@ class SimpleModel(mesa.Model):
         )
 
     def step(self):
-        self.datacollector.collect(self)
+        # self.datacollector.get_agent_vars_dataframe()
         self.schedule.step()
