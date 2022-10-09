@@ -11,7 +11,7 @@ def list_agent_id(model):
 
 
 def list_network_neighbours(model):
-    agent_neighbours = [agent.neighbours for agent in model.schedule.agents]
+    agent_neighbours = [agent.neighbours_list for agent in model.schedule.agents]
     return agent_neighbours
 
 
@@ -35,15 +35,16 @@ random_agent_reporters = {
     "neighbours": "neighbours_list",
     "group_id": "group_id",
     "player_id": "player_id",
-    "pd_game_opponent_1_AgentID": "pd_game_opponent_1_AgentID",
-    "pd_game_opponent_2_AgentID": "pd_game_opponent_2_AgentID",
-    "pd_game_decision_1": "pd_game_decision_1",
-    "pd_game_decision_2": "pd_game_decision_2",
-    # "pd_game_opponent_1_pd_game_decision_1" : "pd_game_opponent_1_pd_game_decision_1",
-    # "pd_game_opponent_2_pd_game_decision_2" : "pd_game_opponent_2_pd_game_decision_2",
+    "opponent_1_AgentID": "pd_game_opponent_1_AgentID",
+    "opponent_2_AgentID": "pd_game_opponent_2_AgentID",
+    "decision_1": "pd_game_decision_1",
+    "decision_2": "pd_game_decision_2",
     "payoff_1": "payoff_1",
     "payoff_2": "payoff_2",
-    "payoff": "payoff",
+    "payoff_total": "payoff_total",
+    "payoff_mean": "payoff_mean",
+    "result_1": "result_1",
+    "result_2": "result_2",
 }
 
 
@@ -53,4 +54,19 @@ def get_agent_reporters_by_game_type(model):
         for i in range(0, model.num_agents):
             new_reporter = {"agent_" + str(i) + "_reputation": "agent_" + str(i) + "_reputation"}
             agent_reporters = {**agent_reporters, **new_reporter}
+    if model.game_type == "gossip":
+        for i in range(0, model.num_agents):
+            new_reporter = {"agent_" + str(i) + "_reputation_gossip": "agent_" + str(i) + "_reputation_gossip"}
+            agent_reporters = {**agent_reporters, **new_reporter}
+        for i in range(1, len(model.schedule.agents[0].neighbours_list) + 1):
+            new_reporter = {
+                "neighbour_" + str(i): "neighbour_" + str(i),
+                "neighbour_" + str(i) + "_AgentID": "neighbour_" + str(i) + "_AgentID",
+                "neighbour_" + str(i) + "_reputation": "neighbour_" + str(i) + "_reputation",
+                "gossip_decision_" + str(i): "gossip_decision_" + str(i),
+                "gossip_dictionary_" + str(i): "gossip_dictionary_" + str(i),
+                "update_decision_" + str(i): "update_decision_" + str(i),
+            }
+            agent_reporters = {**agent_reporters, **new_reporter}
+        agent_reporters = {**agent_reporters, **{"score_update_dictionary": "score_update_dictionary"}}
     return agent_reporters
