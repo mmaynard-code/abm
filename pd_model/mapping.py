@@ -1,5 +1,5 @@
 stage_lists_by_game_type = {
-    "random": ["step_start", "step_pd", "step_payoffs", "step_collect"],
+    "random": ["step_pd", "step_payoffs", "step_collect"],
     "reputation": ["step_start", "step_pd", "step_payoffs", "step_scoring", "step_collect"],
     "gossip": [
         "step_start",
@@ -20,7 +20,7 @@ scoring_distributions_by_payoff_result = {
     0: [10, 9, 8, 7, 6, 5, 5, 4, 4, 4, 3, 3, 3, 3, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0],
 }
 
-pd_game_decision_distributions_by_score = {
+pd_decision_distributions_by_score = {
     10: [
         "Cooperate",
         "Cooperate",
@@ -90,7 +90,7 @@ pd_game_decision_distributions_by_score = {
     None: ["Cooperate", "Defect"],
 }
 
-gossip_decision_distributions_by_score = {
+simple_gossip_decision_neighbour_distributions_by_score = {
     10: ["All", "All", "All", "All", "All", "High", "High", "Low", "Low", "None"],
     9: ["All", "All", "All", "High", "High", "High", "Low", "Low", "Low", "None"],
     8: ["All", "All", "All", "High", "High", "High", "Low", "Low", "Low", "None"],
@@ -105,19 +105,49 @@ gossip_decision_distributions_by_score = {
     None: ["All", "High", "Low", "None"],
 }
 
+complex_gossip_decision_neighbour_distributions_by_score = {
+    10: [True, True, True, True, True, True, True, True, True, False],  # 90%
+    9: [True, True, True, True, True, True, True, True, True, False],  # 90%
+    8: [True, True, True, True, True, True, True, True, False, False],  # 80%
+    7: [True, True, True, True, True, True, True, False, False, False],  # 70%
+    6: [True, True, True, True, True, True, False, False, False, False],  # 60%
+    5: [True, True, True, True, True, False, False, False, False, False],  # 50%
+    4: [True, True, True, True, False, False, False, False, False, False],  # 40%
+    3: [True, True, True, False, False, False, False, False, False, False],  # 30%
+    2: [True, True, False, False, False, False, False, False, False, False],  # 20%
+    1: [True, False, False, False, False, False, False, False, False, False],  # 10%
+    0: [True, False, False, False, False, False, False, False, False, False],  # 10%
+    None: [True, True, True, False],  # 75%
+}
+
+complex_gossip_decision_subject_distributions_by_score = {
+    10: [True, True, True, True, True, True, True, True, False, False],  # 80%
+    9: [True, True, True, True, True, True, False, False, False, False],  # 60%
+    8: [True, True, True, True, True, False, False, False, False, False],  # 50%
+    7: [True, True, True, True, False, False, False, False, False, False],  # 40%
+    6: [True, True, True, False, False, False, False, False, False, False],  # 30%
+    5: [True, True, False, False, False, False, False, False, False, False],  # 20%
+    4: [True, True, True, False, False, False, False, False, False, False],  # 30%
+    3: [True, True, True, True, False, False, False, False, False, False],  # 40%
+    2: [True, True, True, True, True, False, False, False, False, False],  # 50%
+    1: [True, True, True, True, True, True, False, False, False, False],  # 60%
+    0: [True, True, True, True, True, True, True, True, False, False],  # 80%
+    None: [False, False, False, False],  # 0%
+}
+
 update_decision_distributions_by_score = {
-    10: [True, True, True, True, True, True, True, True, True, False],
-    9: [True, True, True, True, True, True, True, True, True, False],
-    8: [True, True, True, True, True, True, True, True, False, False],
-    7: [True, True, True, True, True, True, True, False, False, False],
-    6: [True, True, True, True, True, True, False, False, False, False],
-    5: [True, True, True, True, True, False, False, False, False, False],
-    4: [True, True, True, True, False, False, False, False, False, False],
-    3: [True, True, True, False, False, False, False, False, False, False],
-    2: [True, True, False, False, False, False, False, False, False, False],
-    1: [True, False, False, False, False, False, False, False, False, False],
-    0: [True, False, False, False, False, False, False, False, False, False],
-    None: [True, True, True, True, False, False, False, False, False, False],
+    10: [True, True, True, True, True, True, True, True, True, False],  # 90%
+    9: [True, True, True, True, True, True, True, True, True, False],  # 90%
+    8: [True, True, True, True, True, True, True, True, False, False],  # 80%
+    7: [True, True, True, True, True, True, True, False, False, False],  # 70%
+    6: [True, True, True, True, True, True, False, False, False, False],  # 60%
+    5: [True, True, True, True, True, False, False, False, False, False],  # 50%
+    4: [True, True, True, True, False, False, False, False, False, False],  # 40%
+    3: [True, True, True, False, False, False, False, False, False, False],  # 30%
+    2: [True, True, False, False, False, False, False, False, False, False],  # 20%
+    1: [True, False, False, False, False, False, False, False, False, False],  # 10%
+    0: [True, False, False, False, False, False, False, False, False, False],  # 10%
+    None: [True, True, True, True, False, False, False, False, False, False],  # 40%
 }
 
 pd_payoff_matrix = {
@@ -146,6 +176,11 @@ random_group_matching = {1: [2, 4], 2: [1, 3], 3: [4, 2], 4: [3, 1]}
 
 
 def get_neighbour_maps_by_treatment_id(agent_id, network_agents, treatment_id):
+    """
+    Creates a list of neighbour agent_ids based on both the treatment_id and the number of network_agents
+    in the model.
+    This list is then filtered to remove invalid agent_id values and returned for
+    """
     neighbour_list = [
         agent_id + 1,
         agent_id - 1,

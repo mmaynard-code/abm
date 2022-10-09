@@ -35,10 +35,10 @@ random_agent_reporters = {
     "neighbours": "neighbours_list",
     "group_id": "group_id",
     "player_id": "player_id",
-    "opponent_1_AgentID": "pd_game_opponent_1_AgentID",
-    "opponent_2_AgentID": "pd_game_opponent_2_AgentID",
-    "decision_1": "pd_game_decision_1",
-    "decision_2": "pd_game_decision_2",
+    "opponent_1_AgentID": "pd_opponent_1_AgentID",
+    "opponent_2_AgentID": "pd_opponent_2_AgentID",
+    "decision_1": "pd_decision_1",
+    "decision_2": "pd_decision_2",
     "payoff_1": "payoff_1",
     "payoff_2": "payoff_2",
     "payoff_total": "payoff_total",
@@ -63,10 +63,10 @@ def get_agent_reporters_by_game_type(model):
                 "neighbour_" + str(i): "neighbour_" + str(i),
                 "neighbour_" + str(i) + "_AgentID": "neighbour_" + str(i) + "_AgentID",
                 "neighbour_" + str(i) + "_reputation": "neighbour_" + str(i) + "_reputation",
-                "gossip_decision_" + str(i): "gossip_decision_" + str(i),
+                "gossip_decision_neighbour_" + str(i): "gossip_decision_neighbour_" + str(i),
                 "gossip_dictionary_" + str(i): "gossip_dictionary_" + str(i),
                 "update_decision_" + str(i): "update_decision_" + str(i),
             }
             agent_reporters = {**agent_reporters, **new_reporter}
-        agent_reporters = {**agent_reporters, **{"score_update_dictionary": "score_update_dictionary"}}
+        agent_reporters = {**agent_reporters, **{"update_dictionary": "update_dictionary"}}
     return agent_reporters
