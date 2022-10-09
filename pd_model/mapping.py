@@ -1,7 +1,16 @@
 stage_lists_by_game_type = {
     "random": ["step_start", "step_pd", "step_payoffs", "step_collect"],
     "reputation": ["step_start", "step_pd", "step_payoffs", "step_scoring", "step_collect"],
-    "gossip": ["step_start", "step_pd", "step_payoffs", "step_scoring", "step_gossip", "step_update", "step_collect"],
+    "gossip": [
+        "step_start",
+        "step_pd",
+        "step_payoffs",
+        "step_scoring",
+        "step_gossip",
+        "step_reflect",
+        "step_update",
+        "step_collect",
+    ],
 }
 
 scoring_distributions_by_payoff_result = {
@@ -11,7 +20,7 @@ scoring_distributions_by_payoff_result = {
     0: [10, 9, 8, 7, 6, 5, 5, 4, 4, 4, 3, 3, 3, 3, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0],
 }
 
-decision_distributions_by_score = {
+pd_game_decision_distributions_by_score = {
     10: [
         "Cooperate",
         "Cooperate",
@@ -81,7 +90,37 @@ decision_distributions_by_score = {
     None: ["Cooperate", "Defect"],
 }
 
-payoff_matrix = {
+gossip_decision_distributions_by_score = {
+    10: ["All", "All", "All", "All", "All", "High", "High", "Low", "Low", "None"],
+    9: ["All", "All", "All", "High", "High", "High", "Low", "Low", "Low", "None"],
+    8: ["All", "All", "All", "High", "High", "High", "Low", "Low", "Low", "None"],
+    7: ["All", "All", "High", "High", "High", "Low", "Low", "Low", "None", "None"],
+    6: ["All", "All", "High", "High", "Low", "Low", "Low", "None", "None", "None"],
+    5: ["All", "High", "High", "Low", "Low", "Low", "None", "None", "None", "None"],
+    4: ["All", "High", "High", "Low", "Low", "None", "None", "None", "None", "None"],
+    3: ["All", "High", "Low", "Low", "None", "None", "None", "None", "None", "None"],
+    2: ["All", "High", "Low", "Low", "None", "None", "None", "None", "None", "None"],
+    1: ["All", "High", "Low", "Low", "None", "None", "None", "None", "None", "None"],
+    0: ["All", "High", "Low", "None", "None", "None", "None", "None", "None", "None"],
+    None: ["All", "High", "Low", "None"],
+}
+
+update_decision_distributions_by_score = {
+    10: [True, True, True, True, True, True, True, True, True, False],
+    9: [True, True, True, True, True, True, True, True, True, False],
+    8: [True, True, True, True, True, True, True, True, False, False],
+    7: [True, True, True, True, True, True, True, False, False, False],
+    6: [True, True, True, True, True, True, False, False, False, False],
+    5: [True, True, True, True, True, False, False, False, False, False],
+    4: [True, True, True, True, False, False, False, False, False, False],
+    3: [True, True, True, False, False, False, False, False, False, False],
+    2: [True, True, False, False, False, False, False, False, False, False],
+    1: [True, False, False, False, False, False, False, False, False, False],
+    0: [True, False, False, False, False, False, False, False, False, False],
+    None: [True, True, True, True, False, False, False, False, False, False],
+}
+
+pd_payoff_matrix = {
     "Cooperate": {
         "Cooperate": 5,
         "Defect": 0,
@@ -89,6 +128,17 @@ payoff_matrix = {
     "Defect": {
         "Cooperate": 6,
         "Defect": 2,
+    },
+}
+
+pd_result_matrix = {
+    "Cooperate": {
+        "Cooperate": "Cooperation",
+        "Defect": "Betrayed",
+    },
+    "Defect": {
+        "Cooperate": "Betrayer",
+        "Defect": "Both Betray",
     },
 }
 

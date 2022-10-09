@@ -25,6 +25,26 @@ def assign_network_id(model, network_agents, treatment_id):
         current_network += 1
 
 
+def assign_neighbour_values(agent):
+    current_neighbour = 1
+    for i in agent.neighbours_list:
+        neighbour_column_list = [
+            "neighbour_" + str(current_neighbour),
+            "neighbour_" + str(current_neighbour) + "_AgentID",
+            "neighbour_" + str(current_neighbour) + "_reputation",
+        ]
+        if agent.model.schedule.steps == 0:
+            setattr(
+                agent,
+                neighbour_column_list[0],
+                [x for x in agent.model.schedule.agents if (x.network_id == agent.network_id) & (x.agent_id == i)][0],
+            )
+            setattr(agent, neighbour_column_list[1], getattr(agent, neighbour_column_list[0]).unique_id)
+        reputation_column = "agent_" + str(getattr(agent, neighbour_column_list[0]).unique_id) + "_reputation"
+        setattr(agent, neighbour_column_list[2], getattr(agent, reputation_column))
+        current_neighbour += 1
+
+
 def assign_random_group_id(model):
     """
     Randomly assigns each agent a group_id
@@ -86,7 +106,10 @@ def assign_agent_base_attributes(agent):
     agent.pd_game_decision_2 = None
     agent.payoff_1 = None
     agent.payoff_2 = None
-    agent.payoff = 0
+    agent.payoff_total = 0
+    agent.payoff_mean = 0
+    agent.result_1 = None
+    agent.result_2 = None
 
 
 def assign_agent_reputation_attributes(agent):
