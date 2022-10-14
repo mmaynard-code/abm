@@ -280,49 +280,8 @@ def get_player_level_variables(df):
                     pre_pd_reputation = round_df["final_reputation_dict"]
 
                 # Add in opponent_reputation pre_pd and neighbour_reputation pre_share and neighbour_reputation post_share
-                pre_pd_reputation_dict = round_df["pre_pd_reputation_dict"].get(j)
-                post_pd_reputation_dict = round_df["post_pd_reputation_dict"].get(j)
-                final_reputation_dict = round_df["final_reputation_dict"].get(j)
-                if k == 1:
-                    opponent_1_pre_pd_reputation = None
-                    opponent_2_pre_pd_reputation = None
-                else:
-                    opponent_1_pre_pd_reputation = pre_pd_reputation_dict.get(int(opponents[0]))
-                    opponent_2_pre_pd_reputation = pre_pd_reputation_dict.get(int(opponents[1]))
-                opponent_1_post_pd_reputation = post_pd_reputation_dict.get(int(opponents[0]))
-                opponent_2_post_pd_reputation = post_pd_reputation_dict.get(int(opponents[1]))
-                opponent_1_final_reputation = final_reputation_dict.get(int(opponents[0]))
-                opponent_2_final_reputation = final_reputation_dict.get(int(opponents[1]))
-                if k >= 6:
-                    neighbour_1_share_reputation = post_pd_reputation_dict.get(int(neighbours[0]))
-                    neighbour_2_share_reputation = post_pd_reputation_dict.get(int(neighbours[1]))
-                    neighbour_1_final_reputation = final_reputation_dict.get(int(neighbours[0]))
-                    neighbour_2_final_reputation = final_reputation_dict.get(int(neighbours[1]))
-                    if len(neighbours) == 3:
-                        neighbour_3_share_reputation = post_pd_reputation_dict.get(int(neighbours[2]))
-                        neighbour_3_final_reputation = final_reputation_dict.get(int(neighbours[2]))
-                    else:
-                        neighbour_3_share_reputation = None
-                        neighbour_3_final_reputation = None
-                else:
-                    neighbour_1_share_reputation = None
-                    neighbour_2_share_reputation = None
-                    neighbour_1_final_reputation = None
-                    neighbour_2_final_reputation = None
-                    neighbour_3_share_reputation = None
-                    neighbour_3_final_reputation = None
-                round_df.insert(27, "opponent_1_pre_pd_reputation", [opponent_1_pre_pd_reputation])
-                round_df.insert(28, "opponent_1_post_pd_reputation", [opponent_1_post_pd_reputation])
-                round_df.insert(29, "opponent_1_final_reputation", [opponent_1_final_reputation])
-                round_df.insert(30, "opponent_2_pre_pd_reputation", [opponent_2_pre_pd_reputation])
-                round_df.insert(31, "opponent_2_post_pd_reputation", [opponent_2_post_pd_reputation])
-                round_df.insert(32, "opponent_2_final_reputation", [opponent_2_final_reputation])
-                round_df.insert(33, "neighbour_1_share_reputation", [neighbour_1_share_reputation])
-                round_df.insert(34, "neighbour_1_final_reputation", [neighbour_1_final_reputation])
-                round_df.insert(35, "neighbour_2_share_reputation", [neighbour_2_share_reputation])
-                round_df.insert(36, "neighbour_2_final_reputation", [neighbour_2_final_reputation])
-                round_df.insert(37, "neighbour_3_share_reputation", [neighbour_3_share_reputation])
-                round_df.insert(38, "neighbour_3_final_reputation", [neighbour_3_final_reputation])
+                round_df = get_opponent_variables(round_df, k, j)
+                round_df = get_neighbour_variables(round_df, k, j)
 
                 output_round_df = round_df
                 if row_number == 0:
@@ -340,6 +299,63 @@ def filter_dict_by_list(dict_to_filter, list):
         if key in list:
             new_dict[key] = value
     return new_dict
+
+
+def get_opponent_variables(df, round_number, player_id):
+    opponents = str(df["player_opponents"].get(player_id)).split(",")
+    pre_pd_reputation_dict = df["pre_pd_reputation_dict"].get(player_id)
+    post_pd_reputation_dict = df["post_pd_reputation_dict"].get(player_id)
+    final_reputation_dict = df["final_reputation_dict"].get(player_id)
+    for i in range(0, len(opponents)):
+        opponent_ref = i + 1
+        if round_number == 1:
+            opponent_pre_pd_reputation = None
+        else:
+            opponent_pre_pd_reputation = pre_pd_reputation_dict.get(int(opponents[i]))
+        opponent_post_pd_reputation = post_pd_reputation_dict.get(int(opponents[i]))
+        opponent_final_reputation = final_reputation_dict.get(int(opponents[i]))
+
+        df.insert(27, f"opponent_{opponent_ref}_pre_pd_reputation", [opponent_pre_pd_reputation])
+        df.insert(28, f"opponent_{opponent_ref}_post_pd_reputation", [opponent_post_pd_reputation])
+        df.insert(29, f"opponent_{opponent_ref}_final_reputation", [opponent_final_reputation])
+    return df
+
+
+def get_neighbour_variables(df, round_number, player_id):
+    neighbours = str(df["player_neighbours"].get(player_id)).split(",")
+    post_pd_reputation_dict = df["post_pd_reputation_dict"].get(player_id)
+    shared_reputation_dict = df["shared_reputation_dict"].get(player_id)
+    final_reputation_dict = df["final_reputation_dict"].get(player_id)
+    if len(neighbours) == 2:
+        df.insert(30, "neighbour_3_post_pd_reputation", [None])
+        df.insert(31, "neighbour_3_final_reputation", [None])
+        df.insert(32, "neighbour_3_share_decision", [None])
+        df.insert(33, "neighbour_3_share_number", [None])
+        df.insert(34, "neighbour_3_share_low", [None])
+        df.insert(35, "neighbour_3_share_high", [None])
+    for i in range(0, len(neighbours)):
+        neighbour_ref = i + 1
+        if round_number >= 6:
+            neighbour_post_pd_reputation = post_pd_reputation_dict.get(int(neighbours[0]))
+            neighbour_final_reputation = final_reputation_dict.get(int(neighbours[0]))
+            neighbour_share_decision = shared_reputation_dict[0].get(int(neighbours[i])) is not None
+            neighbour_share_number = len(list(shared_reputation_dict[0].get(int(neighbours[i]))))
+            neighbour_share_low = sum(i <= 3 for i in list(shared_reputation_dict[0].get(int(neighbours[i])).values()))
+            neighbour_share_high = sum(i >= 8 for i in list(shared_reputation_dict[0].get(int(neighbours[i])).values()))
+            df.insert(30, f"neighbour_{neighbour_ref}_post_pd_reputation", [neighbour_post_pd_reputation])
+            df.insert(31, f"neighbour_{neighbour_ref}_final_reputation", [neighbour_final_reputation])
+            df.insert(32, f"neighbour_{neighbour_ref}_share_decision", [neighbour_share_decision])
+            df.insert(33, f"neighbour_{neighbour_ref}_share_number", [neighbour_share_number])
+            df.insert(34, f"neighbour_{neighbour_ref}_share_low", [neighbour_share_low])
+            df.insert(35, f"neighbour_{neighbour_ref}_share_high", [neighbour_share_high])
+        else:
+            df.insert(30, f"neighbour_{neighbour_ref}_post_pd_reputation", [None])
+            df.insert(31, f"neighbour_{neighbour_ref}_final_reputation", [None])
+            df.insert(32, f"neighbour_{neighbour_ref}_share_decision", [None])
+            df.insert(33, f"neighbour_{neighbour_ref}_share_number", [None])
+            df.insert(34, f"neighbour_{neighbour_ref}_share_low", [None])
+            df.insert(35, f"neighbour_{neighbour_ref}_share_high", [None])
+    return df
 
 
 other_player_mapping = {
