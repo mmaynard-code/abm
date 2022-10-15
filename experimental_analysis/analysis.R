@@ -50,6 +50,8 @@ neighbour_3_data <- df %>%
   rename_all(
     ~str_replace(.x,"neighbour_3_","neighbour_"))
 
+
+
 share_decision_data <- bind_rows(
   neighbour_1_data,
   neighbour_2_data,
@@ -59,60 +61,18 @@ share_decision_data <- bind_rows(
 pd_decision_data <- bind_rows(
   opponent_1_data,
   opponent_2_data
-)
+  )
 
-pd_decision_by_reputation <- ggplot(pd_decision_data) +
-  aes(
-    x=as.factor(opponent_pre_pd_reputation),
-    fill=factor(player_decision)) +
-  geom_bar(position="fill") +
-  #scale_y_continuous(labels = scales::percent) +
-  facet_wrap(~treatment_ref, ncol = 1)
-pd_decision_by_reputation
 
-pd_decision_by_round <- ggplot(pd_decision_data) +
-  aes(
-    x=as.factor(subsession_round_number),
-    fill=factor(player_decision)) +
-  geom_bar(position="fill") +
-  #scale_y_continuous(labels = scales::percent) +
-  facet_wrap(~treatment_ref, ncol = 1)
-pd_decision_by_round
+pd_decision_data_for_abm <- pd_decision_data %>%
+  group_by(treatment_ref, opponent_pre_pd_reputation, player_decision) %>%
+  summarise(n = n()) %>%
+  mutate(freq = n / sum(n)) %>%
+  select(-n)
 
-write.csv(na.omit(share_decision_data), "share_decision_data.csv")
-
-share_decision_by_reputation <- ggplot(na.omit(share_decision_data)) +
-  aes(
-    x=as.factor(neighbour_post_pd_reputation),
-    fill=factor(neighbour_share_decision)) +
-  geom_bar(position="fill") #+
-  #scale_y_continuous(labels = scales::percent) +
-  #facet_wrap(~treatment_ref, ncol = 1)
-share_decision_by_reputation
-
-share_number_by_reputation <- ggplot(na.omit(share_decision_data)) +
-  aes(
-    x=as.factor(neighbour_post_pd_reputation),
-    fill=factor(neighbour_share_number)) +
-  geom_bar(position="fill") +
-  #scale_y_continuous(labels = scales::percent) +
-  facet_wrap(~treatment_ref, ncol = 1)
-share_number_by_reputation
-
-share_high_by_reputation <- ggplot(na.omit(share_decision_data)) +
-  aes(
-    x=as.factor(neighbour_post_pd_reputation),
-    fill=factor(neighbour_share_high)) +
-  geom_bar(position="fill") +
-  #scale_y_continuous(labels = scales::percent) +
-  facet_wrap(~treatment_ref, ncol = 1)
-share_high_by_reputation
-
-share_low_by_reputation <- ggplot(na.omit(share_decision_data)) +
-  aes(
-    x=as.factor(neighbour_post_pd_reputation),
-    fill=factor(neighbour_share_low)) +
-  geom_bar(position="fill") +
-  #scale_y_continuous(labels = scales::percent) +
-  facet_wrap(~treatment_ref, ncol = 1)
-share_low_by_reputation
+share_decision_data_for_abm <- share_decision_data %>%
+  filter(neighbour_share_decision != "Sharing Not Possible") %>%
+  group_by(treatment_ref, neighbour_post_pd_reputation, neighbour_share_decision) %>%
+  summarise(n = n()) %>%
+  mutate(freq = n / sum(n)) %>%
+  select(-n)
