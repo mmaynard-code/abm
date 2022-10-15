@@ -40,7 +40,7 @@ print("Number of valid sessions processed: " + str(valid_files_processed))
 print("Number of invalid sessions found: " + str(invalid_files))
 
 output_df = get_player_level_variables(all_session_df)
-# print(output_df.columns)
+print(output_df.columns)
 print(output_df.head())
 print(len(output_df.index))
 print(26 * 16 * 16)

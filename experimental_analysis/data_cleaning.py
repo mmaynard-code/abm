@@ -365,6 +365,7 @@ def get_neighbour_variables(df, round_number, player_id):
 
 
 def get_other_player_reputations(df, round_number, player_id):
+    known_opponents = df["known_opponents"].get(player_id)
     neighbours = str(df["player_neighbours"].get(player_id)).split(",")
     pre_pd_reputation_dict = df["pre_pd_reputation_dict"].get(player_id)
     post_pd_reputation_dict = df["post_pd_reputation_dict"].get(player_id)
@@ -397,12 +398,94 @@ def get_other_player_reputations(df, round_number, player_id):
             neighbour_2_gossip = None
             neighbour_3_gossip = None
         final_reputation = final_reputation_dict.get(i)
+        gossip_1_new_flag = i not in known_opponents and neighbour_1_gossip is not None
+        gossip_2_new_flag = i not in known_opponents and neighbour_2_gossip is not None
+        gossip_3_new_flag = i not in known_opponents and neighbour_3_gossip is not None
+
+        gossip_change = post_pd_reputation != final_reputation
+
+        if post_pd_reputation is not None and final_reputation is not None:
+            gossip_change_amount = abs(post_pd_reputation - final_reputation)
+        elif post_pd_reputation is None and final_reputation is not None:
+            gossip_change_amount = abs(5 - final_reputation)
+        else:
+            gossip_change_amount = None
+
+        non_none_gossip_values = list(
+            filter(lambda item: item is not None, [neighbour_1_gossip, neighbour_2_gossip, neighbour_3_gossip])
+        )
+        if all([neighbour_1_gossip is None, neighbour_2_gossip is None, neighbour_3_gossip is None]):
+            gossip_available = None
+            gossip_consensus = None
+            neighbour_1_pre_gossip_consensus = None
+            neighbour_1_post_gossip_consensus = None
+            neighbour_2_pre_gossip_consensus = None
+            neighbour_2_post_gossip_consensus = None
+            neighbour_3_pre_gossip_consensus = None
+            neighbour_3_post_gossip_consensus = None
+        elif any([neighbour_1_gossip is not None, neighbour_2_gossip is not None, neighbour_3_gossip is not None]):
+            gossip_available = len(non_none_gossip_values)
+            gossip_consensus = np.var(non_none_gossip_values)
+            if post_pd_reputation is not None:
+                if neighbour_1_gossip is not None:
+                    neighbour_1_pre_gossip_consensus = np.var([post_pd_reputation, neighbour_1_gossip])
+                else:
+                    neighbour_1_pre_gossip_consensus = None
+                if neighbour_2_gossip is not None:
+                    neighbour_2_pre_gossip_consensus = np.var([post_pd_reputation, neighbour_2_gossip])
+                else:
+                    neighbour_2_pre_gossip_consensus = None
+                if neighbour_3_gossip is not None:
+                    neighbour_3_pre_gossip_consensus = np.var([post_pd_reputation, neighbour_3_gossip])
+                else:
+                    neighbour_3_pre_gossip_consensus = None
+            else:
+                neighbour_1_pre_gossip_consensus = None
+                neighbour_2_pre_gossip_consensus = None
+                neighbour_3_pre_gossip_consensus = None
+
+            if final_reputation is not None:
+                if neighbour_1_gossip is not None:
+                    neighbour_1_post_gossip_consensus = np.var([final_reputation, neighbour_1_gossip])
+                else:
+                    neighbour_1_post_gossip_consensus = None
+                if neighbour_2_gossip is not None:
+                    neighbour_2_post_gossip_consensus = np.var([final_reputation, neighbour_2_gossip])
+                else:
+                    neighbour_2_post_gossip_consensus = None
+                if neighbour_3_gossip is not None:
+                    neighbour_3_post_gossip_consensus = np.var([final_reputation, neighbour_3_gossip])
+                else:
+                    neighbour_3_post_gossip_consensus = None
+            else:
+                neighbour_1_post_gossip_consensus = None
+                neighbour_2_post_gossip_consensus = None
+                neighbour_3_post_gossip_consensus = None
+
         df.insert(36, f"other_player_{i}_pre_pd_reputation", pre_pd_reputation)
-        df.insert(37, f"other_player_{i}_post_pd_reputation_dict", post_pd_reputation)
+        df.insert(37, f"other_player_{i}_post_pd_reputation", post_pd_reputation)
         df.insert(38, f"other_player_{i}_neighbour_1_gossip", neighbour_1_gossip)
         df.insert(39, f"other_player_{i}_neighbour_2_gossip", neighbour_2_gossip)
         df.insert(40, f"other_player_{i}_neighbour_3_gossip", neighbour_3_gossip)
         df.insert(41, f"other_player_{i}_final_reputation", final_reputation)
+        defrag_df = df.copy()
+        df = defrag_df
+        df.insert(42, f"other_player_{i}_neighbour_1_gossip_new_flag", gossip_1_new_flag)
+        df.insert(43, f"other_player_{i}_neighbour_2_gossip_new_flag", gossip_2_new_flag)
+        df.insert(44, f"other_player_{i}_neighbour_3_gossip_new_flag", gossip_3_new_flag)
+        df.insert(45, f"other_player_{i}_gossip_change_flag", gossip_change)
+        df.insert(46, f"other_player_{i}_gossip_change_amount", gossip_change_amount)
+        defrag_df = df.copy()
+        df = defrag_df
+        df.insert(47, f"other_player_{i}_gossip_available", gossip_available)
+        df.insert(48, f"other_player_{i}_gossip_consensus", gossip_consensus)
+        df.insert(49, f"other_player_{i}_neighbour_1_pre_gossip_consensus", neighbour_1_pre_gossip_consensus)
+        df.insert(50, f"other_player_{i}_neighbour_2_pre_gossip_consensus", neighbour_2_pre_gossip_consensus)
+        df.insert(51, f"other_player_{i}_neighbour_3_pre_gossip_consensus", neighbour_3_pre_gossip_consensus)
+        df.insert(52, f"other_player_{i}_neighbour_1_post_gossip_consensus", neighbour_1_post_gossip_consensus)
+        df.insert(53, f"other_player_{i}_neighbour_2_post_gossip_consensus", neighbour_2_post_gossip_consensus)
+        df.insert(54, f"other_player_{i}_neighbour_3_post_gossip_consensus", neighbour_3_post_gossip_consensus)
+
     output_df = df.copy()
     return output_df
 
