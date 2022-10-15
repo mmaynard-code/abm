@@ -338,7 +338,10 @@ def get_neighbour_variables(df, round_number, player_id):
         if round_number >= 6:
             neighbour_post_pd_reputation = post_pd_reputation_dict.get(int(neighbours[0]))
             neighbour_final_reputation = final_reputation_dict.get(int(neighbours[0]))
-            neighbour_share_decision = shared_reputation_dict[0].get(int(neighbours[i])) is not None
+            if len(list(shared_reputation_dict[0].get(int(neighbours[i])))) > 0:
+                neighbour_share_decision = "Yes"
+            else:
+                neighbour_share_decision = "No"
             neighbour_share_number = len(list(shared_reputation_dict[0].get(int(neighbours[i]))))
             neighbour_share_low = sum(i <= 3 for i in list(shared_reputation_dict[0].get(int(neighbours[i])).values()))
             neighbour_share_high = sum(i >= 8 for i in list(shared_reputation_dict[0].get(int(neighbours[i])).values()))

@@ -1,11 +1,11 @@
 import traceback
 
 import pandas as pd
-from data import get_experimental_csv_files_from_directory
-from data import get_game_session_df
-from data import get_player_level_variables
-from data import get_session_player_lookup_df
-from data import merge_all_experimental_data_from_file_list
+from data_cleaning import get_experimental_csv_files_from_directory
+from data_cleaning import get_game_session_df
+from data_cleaning import get_player_level_variables
+from data_cleaning import get_session_player_lookup_df
+from data_cleaning import merge_all_experimental_data_from_file_list
 
 directory = "C:/Users/mattu/OneDrive - Linköpings universitet/MSc Thesis/ResultsCSVs"
 csv_file_paths = get_experimental_csv_files_from_directory(directory, ".csv")
