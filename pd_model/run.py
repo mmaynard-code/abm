@@ -10,7 +10,7 @@ if __name__ == "__main__":
     parameter_config = {
         "network_groups": {2},
         "total_networks": {4},
-        "treatment_id": {4},
+        "treatment_ref": {"B"},
         "game_type": {"gossip"},
         "gossip_logic": {"complex"},
     }

@@ -310,7 +310,7 @@ class SimpleAgent(mesa.Agent):
 class SimpleModel(mesa.Model):
     """A model with some number of agents."""
 
-    def __init__(self, network_groups, total_networks, treatment_id, game_type, gossip_logic="simple"):
+    def __init__(self, network_groups, total_networks, treatment_ref, game_type, gossip_logic="simple"):
         self.num_agents = network_groups * 4 * total_networks
         self.network_agents = network_groups * 4
         self.total_networks = total_networks
@@ -324,7 +324,7 @@ class SimpleModel(mesa.Model):
             a = SimpleAgent(i, self)
             self.schedule.add(a)
 
-        assign_network_id(model=self, network_agents=self.network_agents, treatment_id=treatment_id)
+        assign_network_id(model=self, network_agents=self.network_agents, treatment_ref=treatment_ref)
 
         assign_random_group_id(self)
         assign_random_player_id(self)

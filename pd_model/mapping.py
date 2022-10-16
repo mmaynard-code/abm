@@ -175,9 +175,9 @@ pd_result_matrix = {
 random_group_matching = {1: [2, 4], 2: [1, 3], 3: [4, 2], 4: [3, 1]}
 
 
-def get_neighbour_maps_by_treatment_id(agent_id, network_agents, treatment_id):
+def get_neighbour_maps_by_treatment_ref(agent_id, network_agents, treatment_ref):
     """
-    Creates a list of neighbour agent_ids based on both the treatment_id and the number of network_agents
+    Creates a list of neighbour agent_ids based on both the treatment_ref and the number of network_agents
     in the model.
     This list is then filtered to remove invalid agent_id values and returned for
     """
@@ -187,7 +187,7 @@ def get_neighbour_maps_by_treatment_id(agent_id, network_agents, treatment_id):
         agent_id + (network_agents - 1),
         agent_id - (network_agents - 1),
     ]
-    if treatment_id == 3:
+    if treatment_ref == "B":
         if agent_id in [3, 4, 7, 8, 11, 12, 15, 16, 19, 20, 23, 24, 27, 28]:
             neighbour_list = [agent_id + 1, agent_id - 1, agent_id + 2]
         if agent_id in [5, 6, 9, 10, 13, 14, 17, 18, 21, 22, 25, 26, 29, 30]:
@@ -200,7 +200,7 @@ def get_neighbour_maps_by_treatment_id(agent_id, network_agents, treatment_id):
             neighbour_list = [agent_id - 1, 1, 2]
         if agent_id == network_agents - 1:
             neighbour_list = [agent_id - 1, network_agents, 1]
-    elif treatment_id == 4:
+    elif treatment_ref == "C":
         neighbour_list += [
             int(agent_id + (network_agents / 2)),
             int(agent_id - (network_agents / 2)),
