@@ -1,12 +1,12 @@
 import random
 
-from mapping import get_neighbour_maps_by_treatment_id
+from mapping import get_neighbour_maps_by_treatment_ref
 
 
-def assign_network_id(model, network_agents, treatment_id):
+def assign_network_id(model, network_agents, treatment_ref):
     """
     Assigns each agent a network_id based on the total_networks using the
-    get_neighbour_maps_by_treatment_id logical mapping
+    get_neighbour_maps_by_treatment_ref logical mapping
     This is only run once at the start of the model
     """
     current_network = 1
@@ -16,8 +16,8 @@ def assign_network_id(model, network_agents, treatment_id):
             if a.unique_id < (network_agents * current_network) and a.network_id is None:
                 a.network_id = current_network
                 a.agent_id = current_agent
-                agent_neighbour_list = get_neighbour_maps_by_treatment_id(
-                    agent_id=a.agent_id, network_agents=network_agents, treatment_id=treatment_id
+                agent_neighbour_list = get_neighbour_maps_by_treatment_ref(
+                    agent_id=a.agent_id, network_agents=network_agents, treatment_ref=treatment_ref
                 )
                 a.neighbours_list = agent_neighbour_list
                 current_agent += 1
@@ -96,14 +96,14 @@ def assign_agent_base_attributes(agent):
     agent.network_id = None
     agent.group_id = None
     agent.player_id = None
-    agent.pd_game_opponent_1 = None
-    agent.pd_game_opponent_1_AgentID = None
-    agent.pd_game_opponent_1_pd_game_decision_1 = None
-    agent.pd_game_decision_1 = None
-    agent.pd_game_opponent_2 = None
-    agent.pd_game_opponent_2_AgentID = None
-    agent.pd_game_opponent_2_pd_game_decision_2 = None
-    agent.pd_game_decision_2 = None
+    agent.pd_opponent_1 = None
+    agent.pd_opponent_1_AgentID = None
+    agent.pd_opponent_1_pd_decision_1 = None
+    agent.pd_decision_1 = None
+    agent.pd_opponent_2 = None
+    agent.pd_opponent_2_AgentID = None
+    agent.pd_opponent_2_pd_decision_2 = None
+    agent.pd_decision_2 = None
     agent.payoff_1 = None
     agent.payoff_2 = None
     agent.payoff_total = 0

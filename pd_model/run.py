@@ -5,31 +5,43 @@ import mesa
 import pandas as pd
 from model import SimpleModel
 
-# empty_model = SimpleModel(8, 2, 4, "gossip")
-# empty_model.step()
-# empty_model.step()
-
 if __name__ == "__main__":
     freeze_support()
+    parameter_config = {
+        "network_groups": {2},
+        "total_networks": {2},
+        "treatment_ref": {"C"},
+        "game_type": {"gossip"},
+        "gossip_logic": {"complex"},
+    }
+    n_iterations = 2
+    n_steps = 10
+    # combinations = 0
+    # for i in parameter_config:
+    #     if combinations == 0:
+    #         combinations = len(parameter_config[i])
+    #     else:
+    #         combinations *= len(parameter_config[i])
+    # combinations *= n_iterations
+
+    # print("Running " + str(combinations) + " simulations.")
+
     results = mesa.batch_run(
         SimpleModel,
-        parameters={
-            "network_groups": 2,
-            "total_networks": 2,
-            "treatment_id": 4,
-            "game_type": "gossip",
-            "gossip_logic": "simple",
-        },
-        iterations=1,
-        max_steps=11,
+        parameters=parameter_config,
+        iterations=n_iterations,
+        max_steps=n_steps,
         number_processes=None,
         data_collection_period=1,
         display_progress=True,
     )
 
+    print("Creating pandas DataFrame.")
+
     results_df = pd.DataFrame(results)
 
-    print(results_df[(results_df["Step"] == 10) & (results_df["AgentID"] == 0)])
-    # print(results_df)
+    print("Writing results to csv file.")
 
     results_df.to_csv("results.csv")
+
+    print("Completed.")
