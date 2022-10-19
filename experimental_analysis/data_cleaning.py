@@ -255,7 +255,6 @@ def get_player_level_variables(df):
                 round_df.insert(24, "known_opponents", [opponents_to_update])
                 round_df.insert(25, "known_gossips", [gossip_to_update])
                 round_df.insert(26, "known_all", [all_known_to_update])
-                round_df = round_df.drop("known_all", axis=1)
 
                 # Clean player reputation cols
                 final_reputation_dict = round_df["final_reputation_dict"].get(j)
@@ -332,9 +331,12 @@ def get_neighbour_variables(df, round_number, player_id):
         df.insert(30, "neighbour_3_post_pd_reputation", [None])
         df.insert(31, "neighbour_3_final_reputation", [None])
         df.insert(32, "neighbour_3_share_decision", [None])
-        df.insert(33, "neighbour_3_share_number", [None])
-        df.insert(34, "neighbour_3_share_low", [None])
-        df.insert(35, "neighbour_3_share_high", [None])
+        df.insert(33, "neighbour_3_share_available", [None])
+        df.insert(34, "neighbour_3_share_number", [None])
+        # df.insert(34, "neighbour_3_share_low", [None])
+        # df.insert(35, "neighbour_3_share_high", [None])
+        for j in range(0, 11):
+            df.insert(35, f"neighbour_3_share_score_{j}", [None])
     for i in range(0, len(neighbours)):
         neighbour_ref = i + 1
         if round_number >= 6:
@@ -344,22 +346,37 @@ def get_neighbour_variables(df, round_number, player_id):
                 neighbour_share_decision = "Yes"
             else:
                 neighbour_share_decision = "No"
+            neighbour_share_available = len(post_pd_reputation_dict.keys())
             neighbour_share_number = len(list(shared_reputation_dict[0].get(int(neighbours[i]))))
-            neighbour_share_low = sum(i <= 3 for i in list(shared_reputation_dict[0].get(int(neighbours[i])).values()))
-            neighbour_share_high = sum(i >= 8 for i in list(shared_reputation_dict[0].get(int(neighbours[i])).values()))
+            # neighbour_share_low = sum(j <= 3 for j in list(shared_reputation_dict[0].get(int(neighbours[i])).values()))
+            # neighbour_share_high = sum(k >= 8 for k in list(shared_reputation_dict[0].get(int(neighbours[i])).values()))
             df.insert(30, f"neighbour_{neighbour_ref}_post_pd_reputation", [neighbour_post_pd_reputation])
             df.insert(31, f"neighbour_{neighbour_ref}_final_reputation", [neighbour_final_reputation])
             df.insert(32, f"neighbour_{neighbour_ref}_share_decision", [neighbour_share_decision])
-            df.insert(33, f"neighbour_{neighbour_ref}_share_number", [neighbour_share_number])
-            df.insert(34, f"neighbour_{neighbour_ref}_share_low", [neighbour_share_low])
-            df.insert(35, f"neighbour_{neighbour_ref}_share_high", [neighbour_share_high])
+            df.insert(33, f"neighbour_{neighbour_ref}_share_available", [neighbour_share_available])
+            df.insert(34, f"neighbour_{neighbour_ref}_share_number", [neighbour_share_number])
+            # df.insert(34, f"neighbour_{neighbour_ref}_share_low", [neighbour_share_low])
+            # df.insert(35, f"neighbour_{neighbour_ref}_share_high", [neighbour_share_high])
+            defrag_df = df.copy()
+            df = defrag_df
+            for j in range(0, 11):
+                num_score_available = sum(k == j for k in list(post_pd_reputation_dict.values()))
+                num_score_shared = sum(k == j for k in list(shared_reputation_dict[0].get(int(neighbours[i])).values()))
+                try:
+                    num_score_proportion = num_score_shared / num_score_available
+                except ZeroDivisionError:
+                    num_score_proportion = None
+                df.insert(35, f"neighbour_{neighbour_ref}_share_score_{j}", [num_score_proportion])
         else:
             df.insert(30, f"neighbour_{neighbour_ref}_post_pd_reputation", [None])
             df.insert(31, f"neighbour_{neighbour_ref}_final_reputation", [None])
             df.insert(32, f"neighbour_{neighbour_ref}_share_decision", [None])
-            df.insert(33, f"neighbour_{neighbour_ref}_share_number", [None])
-            df.insert(34, f"neighbour_{neighbour_ref}_share_low", [None])
-            df.insert(35, f"neighbour_{neighbour_ref}_share_high", [None])
+            df.insert(33, f"neighbour_{neighbour_ref}_share_available", [None])
+            df.insert(34, f"neighbour_{neighbour_ref}_share_number", [None])
+            # df.insert(34, f"neighbour_{neighbour_ref}_share_low", [None])
+            # df.insert(35, f"neighbour_{neighbour_ref}_share_high", [None])
+            for j in range(0, 11):
+                df.insert(35, f"neighbour_{neighbour_ref}_share_score_{j}", [None])
     output_df = df.copy()
     return output_df
 

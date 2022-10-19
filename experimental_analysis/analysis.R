@@ -7,30 +7,42 @@ library(glue)
 
 df <- read.csv("experimental_data.csv") %>%
   mutate(treatment_ref = case_when(
-    subsession_treatment_id == 2 ~ "Circle Network",
-    subsession_treatment_id == 4 ~ "Transitive",
-    subsession_treatment_id == 3 ~ "Small World",
+    subsession_treatment_id == 2 ~ "A",
+    subsession_treatment_id == 4 ~ "B",
+    subsession_treatment_id == 3 ~ "C",
   ))
 
 opponent_1_data <- df %>%
   select(
     player_decision1,
     opponent_1_pre_pd_reputation,
+    player_payoffs,
+    opponent_1_post_pd_reputation,
     treatment_ref,
     subsession_round_number) %>%
   rename(
     player_decision = player_decision1,
-    opponent_pre_pd_reputation = opponent_1_pre_pd_reputation)
+    opponent_pre_pd_reputation = opponent_1_pre_pd_reputation,
+    opponent_post_pd_reputation = opponent_1_post_pd_reputation,
+    ) %>%
+  separate(player_payoffs, c("player_payoff",NA)) %>%
+  mutate(player_payoff = strtoi(gsub("cu","",player_payoff)))
 
 opponent_2_data <- df %>%
   select(
     player_decision2,
     opponent_2_pre_pd_reputation,
+    player_payoffs,
+    opponent_2_post_pd_reputation,
     treatment_ref,
     subsession_round_number) %>%
   rename(
     player_decision = player_decision2,
-    opponent_pre_pd_reputation = opponent_2_pre_pd_reputation)
+    opponent_pre_pd_reputation = opponent_2_pre_pd_reputation,
+    opponent_post_pd_reputation = opponent_2_post_pd_reputation,
+    ) %>%
+  separate(player_payoffs, c("player_payoff",NA)) %>%
+  mutate(player_payoff = strtoi(gsub("cu","",player_payoff)))
 
 pd_decision_data <- bind_rows(
   opponent_1_data,
@@ -40,8 +52,9 @@ pd_decision_data <- bind_rows(
     player_decision = case_when(
       player_decision == "X" ~ "Cooperate",
       player_decision == "Y" ~ "Defect",
-    )
-  )
+    ),
+  ) %>%
+  filter(!(player_payoff == 0 & player_decision == "Defect"))
 
 for (i in seq(1,3,1)) {
   df_to_bind <- df %>%
@@ -102,9 +115,9 @@ for (i in seq(1,16,1)) {
   }
 }
 
-pd_decision_data_for_abm <- pd_decision_data %>%
+abm_pd_decision_distributions_by_score <- pd_decision_data %>%
   group_by(
-    treatment_ref,
+    #treatment_ref,
     opponent_pre_pd_reputation,
     player_decision
     ) %>%
@@ -112,27 +125,90 @@ pd_decision_data_for_abm <- pd_decision_data %>%
   mutate(freq = n / sum(n)) %>%
   select(-n)
 
-share_decision_data_for_abm <- share_decision_data %>%
-  filter(neighbour_share_decision != "Sharing Not Possible") %>%
+abm_pd_scoring_distributions_by_payoff_result <- pd_decision_data %>%
   group_by(
-    treatment_ref,
-    neighbour_post_pd_reputation,
-    neighbour_share_decision
-    ) %>%
+    #treatment_ref,
+    player_payoff,
+    opponent_post_pd_reputation,
+  ) %>%
   summarise(n = n()) %>%
   mutate(freq = n / sum(n)) %>%
   select(-n)
 
-update_decision_data_neighbour_rep_for_abm <- update_decision_data %>%
-  filter(gossip_available >= 1 & neighbour_gossip_new_flag == "True") %>%
+#share_decision_data_for_abm <- share_decision_data %>%
+#  filter(neighbour_share_decision != "Sharing Not Possible") %>%
+#  group_by(
+#    #treatment_ref,
+#    neighbour_post_pd_reputation,
+#    neighbour_share_decision
+#    ) %>%
+#  summarise(n = n()) %>%
+#  mutate(freq = n / sum(n)) %>%
+#  select(-n)
+
+abm_gossip_value_distribution_by_gossip_value <- share_decision_data %>%
+  filter(neighbour_share_decision != "Sharing Not Possible") %>%
   group_by(
-    treatment_ref,
+    #treatment_ref,
+    #neighbour_post_pd_reputation,
+    neighbour_share_decision
+  ) %>%
+  summarise(
+    n = n(),
+    n_0 = round(mean(neighbour_share_score_0, na.rm=T),2),
+    n_1 = round(mean(neighbour_share_score_1, na.rm=T),2),
+    n_2 = round(mean(neighbour_share_score_2, na.rm=T),2),
+    n_3 = round(mean(neighbour_share_score_3, na.rm=T),2),
+    n_4 = round(mean(neighbour_share_score_4, na.rm=T),2),
+    n_5 = round(mean(neighbour_share_score_5, na.rm=T),2),
+    n_6 = round(mean(neighbour_share_score_6, na.rm=T),2),
+    n_7 = round(mean(neighbour_share_score_7, na.rm=T),2),
+    n_8 = round(mean(neighbour_share_score_8, na.rm=T),2),
+    n_9 = round(mean(neighbour_share_score_9, na.rm=T),2),
+    n_10 = round(mean(neighbour_share_score_10, na.rm=T),2)) %>%
+  mutate(
+    freq = n / sum(n)) %>%
+  select(-n) %>%
+  relocate("freq", .after = "neighbour_share_decision") %>%
+  filter(neighbour_share_decision == "Share")
+
+abm_gossip_value_distribution_by_neighbour_score <- share_decision_data %>%
+  filter(neighbour_share_decision != "Sharing Not Possible") %>%
+  group_by(
+    #treatment_ref,
     neighbour_post_pd_reputation,
-    gossip_change_flag
-    ) %>%
-  summarise(n = n()) %>%
-  mutate(freq = n / sum(n)) %>%
-  select(-n)
+    neighbour_share_decision
+  ) %>%
+  summarise(
+    n = n(),
+    n_0 = round(mean(neighbour_share_score_0, na.rm=T),2),
+    n_1 = round(mean(neighbour_share_score_1, na.rm=T),2),
+    n_2 = round(mean(neighbour_share_score_2, na.rm=T),2),
+    n_3 = round(mean(neighbour_share_score_3, na.rm=T),2),
+    n_4 = round(mean(neighbour_share_score_4, na.rm=T),2),
+    n_5 = round(mean(neighbour_share_score_5, na.rm=T),2),
+    n_6 = round(mean(neighbour_share_score_6, na.rm=T),2),
+    n_7 = round(mean(neighbour_share_score_7, na.rm=T),2),
+    n_8 = round(mean(neighbour_share_score_8, na.rm=T),2),
+    n_9 = round(mean(neighbour_share_score_9, na.rm=T),2),
+    n_10 = round(mean(neighbour_share_score_10, na.rm=T),2)) %>%
+  mutate(
+    freq = n / sum(n)) %>%
+  select(-n) %>%
+  relocate("freq", .after = "neighbour_share_decision") %>%
+  filter(neighbour_share_decision == "Share") %>%
+  arrange(desc(neighbour_post_pd_reputation))
+
+#update_decision_data_neighbour_rep_for_abm <- update_decision_data %>%
+#  filter(gossip_available >= 1 & neighbour_gossip_new_flag == "True") %>%
+#  group_by(
+#    treatment_ref,
+#    neighbour_post_pd_reputation,
+#    gossip_change_flag
+#    ) %>%
+#  summarise(n = n()) %>%
+#  mutate(freq = n / sum(n)) %>%
+#  select(-n)
 
 update_decision_data_filtered <- update_decision_data %>%
   mutate(
@@ -145,29 +221,48 @@ update_decision_data_filtered <- update_decision_data %>%
     & (neighbour_pre_gossip_consensus > 0 | neighbour_gossip_new_flag == 'True')
     )
 
-update_decision_data_gossip_rep_for_abm <- update_decision_data_filtered %>%
+abm_update_decision_distribution_by_gossip_value <- update_decision_data_filtered %>%
   group_by(
-    treatment_ref,
+    #treatment_ref,
     neighbour_gossip,
     gossip_change_flag
   ) %>%
   summarise(n = n()) %>%
-  mutate(freq = n / sum(n)) %>%
-  select(-n)
+  mutate(freq = round(n / sum(n),2)) %>%
+  select(-n) %>%
+  arrange(desc(neighbour_gossip))
 
-update_decision_data_neighbour_rep_for_abm <- update_decision_data_filtered %>%
+abm_update_value_distribution_by_neighbour_score <- update_decision_data_filtered %>%
   group_by(
-    treatment_ref,
+    #treatment_ref,
     neighbour_post_pd_reputation,
+    neighbour_gossip,
     gossip_change_flag
   ) %>%
   summarise(n = n()) %>%
-  mutate(freq = n / sum(n)) %>%
-  select(-n)
+  mutate(freq = round(n / sum(n),2)) %>%
+  select(-n) %>%
+  arrange(desc(neighbour_post_pd_reputation)) %>%
+  filter(gossip_change_flag == "True")
+
+#update_decision_data_neighbour_rep_for_abm <- update_decision_data_filtered %>%
+#  group_by(
+#    treatment_ref,
+#    neighbour_post_pd_reputation,
+#    gossip_change_flag
+#  ) %>%
+#  summarise(n = n()) %>%
+#  mutate(freq = n / sum(n)) %>%
+#  select(-n)
 
 write.csv(pd_decision_data, "pd_decision_data.csv")
 write.csv(share_decision_data, "share_decision_data.csv")
 write.csv(update_decision_data, "update_decision_data.csv")
 write.csv(update_decision_data_filtered, "update_decision_data_filtered.csv")
-write.csv(update_decision_data_neighbour_rep_for_abm, "update_decision_data_neighbour_rep.csv")
-write.csv(update_decision_data_gossip_rep_for_abm, "update_decision_data_gossip_rep.csv")
+
+write.csv(abm_pd_decision_distributions_by_score, "abm_pd_decision_distributions_by_score.csv")
+write.csv(abm_pd_scoring_distributions_by_payoff_result, "abm_pd_scoring_distributions_by_payoff_result.csv")
+write.csv(abm_gossip_value_distribution_by_gossip_value, "abm_gossip_value_distribution_by_gossip_value.csv")
+write.csv(abm_gossip_value_distribution_by_neighbour_score, "abm_gossip_value_distribution_by_neighbour_score.csv")
+write.csv(abm_update_decision_distribution_by_gossip_value, "abm_update_decision_distribution_by_gossip_value.csv")
+write.csv(abm_update_value_distribution_by_neighbour_score, "abm_update_value_distribution_by_neighbour_score.csv")

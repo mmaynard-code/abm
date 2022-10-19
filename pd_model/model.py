@@ -8,16 +8,15 @@ from assign import assign_neighbour_values
 from assign import assign_network_id
 from assign import assign_random_group_id
 from assign import assign_random_player_id
-from mapping import complex_gossip_decision_neighbour_distributions_by_score
-from mapping import complex_gossip_decision_subject_distributions_by_score
-from mapping import pd_decision_distributions_by_score
+from decisions import gossip_decision_distribution_by_neighbour_score
+from decisions import gossip_value_distribution_by_gossip_value
+from decisions import pd_decision_distributions_by_score
+from decisions import pd_scoring_distributions_by_payoff_result
+from decisions import update_decision_distribution_by_gossip_value
 from mapping import pd_payoff_matrix
 from mapping import pd_result_matrix
 from mapping import random_group_matching
-from mapping import scoring_distributions_by_payoff_result
-from mapping import simple_gossip_decision_neighbour_distributions_by_score
 from mapping import stage_lists_by_game_type
-from mapping import update_decision_distributions_by_score
 from reporters import get_agent_reporters_by_game_type
 from reporters import model_reporters_by_game_type
 
@@ -89,94 +88,67 @@ class SimpleAgent(mesa.Agent):
         setattr(
             self,
             opponent_1_reputation,
-            int(random.choice(scoring_distributions_by_payoff_result.get(self.payoff_1, None))),
+            int(random.choice(pd_scoring_distributions_by_payoff_result.get(self.payoff_1, None))),
         )
         setattr(
             self,
             opponent_2_reputation,
-            int(random.choice(scoring_distributions_by_payoff_result.get(self.payoff_2, None))),
+            int(random.choice(pd_scoring_distributions_by_payoff_result.get(self.payoff_2, None))),
         )
 
     def set_gossip_decisions(self):
         """
-        Sets gossip_decisions for each agent with logic dependent on the gossip_logic parameter.
-
-        simple
-            the decision as to whether to gossip is dependent on the reputation score that the agent has
-            for each neighbour, it has four possibilities:
-                All - share all reputation scores with neighbour
-                High - share reputations scores >= 8 with neighbour
-                Low - share reputation scores <= 3 with neighbour
-                None - share no reputation scores with neighbour
-            with the probability of All / High / Low increasing with reputation score value
-        complex
-            the decision as to whether to gossip is dependent on both the reputation score that the agent has
-            for each neighbour, as well as the reputation score for the gossip subject. Each of these values
-            is boolean and gossip requires both to be True.
+        Sets gossip_decisions for each agent
         """
-        if self.model.gossip_logic == "simple":
-            for i in range(1, len(self.neighbours_list) + 1):
-                setattr(
-                    self,
-                    "gossip_decision_neighbour_" + str(i),
-                    random.choice(
-                        simple_gossip_decision_neighbour_distributions_by_score.get(
-                            getattr(self, "neighbour_" + str(i) + "_reputation"), None
-                        )
-                    ),
-                )
-        elif self.model.gossip_logic == "complex":
-            for i in range(0, self.model.num_agents):
-                setattr(
-                    self,
-                    "gossip_decision_subject_" + str(i),
-                    random.choice(
-                        complex_gossip_decision_subject_distributions_by_score.get(
-                            getattr(self, "agent_" + str(i) + "_reputation"), None
-                        )
-                    ),
-                )
-            for i in range(1, len(self.neighbours_list) + 1):
-                setattr(
-                    self,
-                    "gossip_decision_neighbour_" + str(i),
-                    random.choice(
-                        complex_gossip_decision_neighbour_distributions_by_score.get(
-                            getattr(self, "neighbour_" + str(i) + "_reputation"), None
-                        )
-                    ),
-                )
+        for i in range(0, self.model.num_agents):
+            setattr(
+                self,
+                "gossip_decision_subject_" + str(i),
+                random.choice(
+                    gossip_value_distribution_by_gossip_value.get(
+                        getattr(self, "agent_" + str(i) + "_reputation"), None
+                    )
+                ),
+            )
+        for i in range(1, len(self.neighbours_list) + 1):
+            setattr(
+                self,
+                "gossip_decision_neighbour_" + str(i),
+                random.choice(
+                    gossip_decision_distribution_by_neighbour_score.get(
+                        getattr(self, "neighbour_" + str(i) + "_reputation"), None
+                    )
+                ),
+            )
 
     def set_gossip_dictionary(self):
         """
         Sets the gossip_dictionary variable for each neighbour based on the gossip_logic parameter.
+
+        gossip_logic
+            simple - decision to share is made if any neighbour_ or subject_gossip_choice is True
+            complex - decision to share is made if both neighbour_ or subject_gossip_choice are True
+
         The gossip_dictionary contains the reputation scores that the agent is choosing to share with
         each neighbour.
         """
         if self.model.gossip_logic == "simple":
             for i in range(1, len(self.neighbours_list) + 1):
-                current_gossip_choice = getattr(self, "gossip_decision_neighbour_" + str(i))
                 gossip_dictionary = {}
-                if current_gossip_choice in ["All", "High"]:
-                    for j in range(0, self.model.num_agents):
+                for j in range(0, self.model.num_agents):
+                    neighbour_gossip_choice = getattr(self, "gossip_decision_neighbour_" + str(i))
+                    subject_gossip_choice = getattr(self, "gossip_decision_subject_" + str(j))
+                    current_gossip_choice = any([neighbour_gossip_choice, subject_gossip_choice])
+                    if current_gossip_choice:
                         current_reputation = getattr(self, "agent_" + str(j) + "_reputation")
                         if current_reputation is None:
                             continue
-                        elif current_reputation >= 8:
-                            new_dictionary = {j: current_reputation}
-                            gossip_dictionary = {**gossip_dictionary, **new_dictionary}
-                if current_gossip_choice in ["All", "Low"]:
-                    for j in range(0, self.model.num_agents):
-                        current_reputation = getattr(self, "agent_" + str(j) + "_reputation")
-                        if current_reputation is None:
-                            continue
-                        elif current_reputation <= 3:
+                        else:
                             new_dictionary = {j: current_reputation}
                             gossip_dictionary = {**gossip_dictionary, **new_dictionary}
                 setattr(self, "gossip_dictionary_" + str(i), gossip_dictionary)
         elif self.model.gossip_logic == "complex":
             for i in range(1, len(self.neighbours_list) + 1):
-                current_gossip_choice = getattr(self, "gossip_decision_neighbour_" + str(i))
                 gossip_dictionary = {}
                 for j in range(0, self.model.num_agents):
                     neighbour_gossip_choice = getattr(self, "gossip_decision_neighbour_" + str(i))
@@ -186,7 +158,7 @@ class SimpleAgent(mesa.Agent):
                         current_reputation = getattr(self, "agent_" + str(j) + "_reputation")
                         if current_reputation is None:
                             continue
-                        elif current_reputation >= 8:
+                        else:
                             new_dictionary = {j: current_reputation}
                             gossip_dictionary = {**gossip_dictionary, **new_dictionary}
                 setattr(self, "gossip_dictionary_" + str(i), gossip_dictionary)
@@ -202,7 +174,7 @@ class SimpleAgent(mesa.Agent):
                 self,
                 "update_decision_" + str(i),
                 random.choice(
-                    update_decision_distributions_by_score.get(
+                    update_decision_distribution_by_gossip_value.get(
                         getattr(self, "neighbour_" + str(i) + "_reputation"), None
                     )
                 ),
@@ -226,7 +198,7 @@ class SimpleAgent(mesa.Agent):
                 if current_neighbour_match:
                     current_gossip_dictionary = getattr(current_neighbour, "gossip_dictionary_" + str(j))
                     if current_gossip_dictionary != {}:
-                        new_update_dictionary = {i: current_gossip_dictionary}
+                        new_update_dictionary = {self.neighbours_list[i - 1]: current_gossip_dictionary}
 
                     update_dictionary = {**update_dictionary, **new_update_dictionary}
         self.update_dictionary = update_dictionary
@@ -236,18 +208,24 @@ class SimpleAgent(mesa.Agent):
         Sets the gossip_values for each agents' reputation score based on the update_dictionary
         """
         for i in range(0, self.model.num_agents):
-            gossip_values = []
+            chosen_gossip_values = []
+            available_gossip_values = []
             for j in range(1, len(self.neighbours_list) + 1):
                 current_gossip_value = None
+                available_gossip_value = None
                 current_update_decision = getattr(self, "update_decision_" + str(j))
+                available_gossip_value = self.update_dictionary.get(j, {}).get(i, None)
                 if self.model.gossip_logic == "simple":
-                    current_gossip_value = self.update_dictionary.get(j, {}).get(i, None)
+                    current_gossip_value = available_gossip_value
                 elif self.model.gossip_logic == "complex":
                     if current_update_decision:
-                        current_gossip_value = self.update_dictionary.get(j, {}).get(i, None)
+                        current_gossip_value = available_gossip_value
                 if current_gossip_value is not None:
-                    gossip_values += [current_gossip_value]
-            setattr(self, "agent_" + str(i) + "_reputation_gossip", gossip_values)
+                    chosen_gossip_values += [current_gossip_value]
+                if available_gossip_value is not None:
+                    available_gossip_values += [available_gossip_value]
+            setattr(self, "agent_" + str(i) + "_reputation_gossip", chosen_gossip_values)
+            setattr(self, "agent_" + str(i) + "_reputation_gossip_available", available_gossip_values)
 
     def set_gossip_scoring(self):
         """
@@ -277,6 +255,13 @@ class SimpleAgent(mesa.Agent):
                 complex_logic_rules = [not_divergent_opinions, len(gossip_values) > 0, not_large_score_difference]
                 if all(complex_logic_rules):
                     setattr(self, "agent_" + str(i) + "_reputation", gossip_consensus)
+
+    # def get_gossip_consensus(self):
+    #     for i in range(0, self.model.num_agents):
+    #         current_reputation = getattr(self, "agent_" + str(i) + "_reputation")
+    #         neighbour_reputation = getattr(
+    #             self,
+    #         )
 
     def step_start(self):
         assign_neighbour_values(self)

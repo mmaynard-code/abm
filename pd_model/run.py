@@ -9,13 +9,13 @@ if __name__ == "__main__":
     freeze_support()
     parameter_config = {
         "network_groups": {2},
-        "total_networks": {4},
-        "treatment_ref": {"B"},
+        "total_networks": {2},
+        "treatment_ref": {"C"},
         "game_type": {"gossip"},
         "gossip_logic": {"complex"},
     }
     n_iterations = 2
-    n_steps = 100
+    n_steps = 10
     # combinations = 0
     # for i in parameter_config:
     #     if combinations == 0:
