@@ -132,8 +132,9 @@ abm_pd_scoring_distributions_by_payoff_result <- pd_decision_data %>%
     opponent_post_pd_reputation,
   ) %>%
   summarise(n = n()) %>%
-  mutate(freq = n / sum(n)) %>%
-  select(-n)
+  mutate(freq = round(n / sum(n),2)) %>%
+  select(-n) %>%
+  arrange(desc(player_payoff))
 
 #share_decision_data_for_abm <- share_decision_data %>%
 #  filter(neighbour_share_decision != "Sharing Not Possible") %>%
@@ -232,6 +233,19 @@ abm_update_decision_distribution_by_gossip_value <- update_decision_data_filtere
   select(-n) %>%
   arrange(desc(neighbour_gossip))
 
+abm_update_decision_distribution_by_neighbour_score <- update_decision_data_filtered %>%
+  group_by(
+    #treatment_ref,
+    neighbour_post_pd_reputation,
+    #neighbour_gossip,
+    gossip_change_flag
+  ) %>%
+  summarise(n = n()) %>%
+  mutate(freq = round(n / sum(n),2)) %>%
+  select(-n) %>%
+  arrange(desc(neighbour_post_pd_reputation)) %>%
+  filter(gossip_change_flag == "True")
+
 abm_update_value_distribution_by_neighbour_score <- update_decision_data_filtered %>%
   group_by(
     #treatment_ref,
@@ -265,4 +279,5 @@ write.csv(abm_pd_scoring_distributions_by_payoff_result, "abm_pd_scoring_distrib
 write.csv(abm_gossip_value_distribution_by_gossip_value, "abm_gossip_value_distribution_by_gossip_value.csv")
 write.csv(abm_gossip_value_distribution_by_neighbour_score, "abm_gossip_value_distribution_by_neighbour_score.csv")
 write.csv(abm_update_decision_distribution_by_gossip_value, "abm_update_decision_distribution_by_gossip_value.csv")
+write.csv(abm_update_decision_distribution_by_neighbour_score, "abm_update_decision_distribution_by_neighbour_score.csv")
 write.csv(abm_update_value_distribution_by_neighbour_score, "abm_update_value_distribution_by_neighbour_score.csv")
