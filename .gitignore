@@ -5,3 +5,4 @@ __pycache__
 .Ruserdata
 *.csv
 abm.Rproj
+*.html
