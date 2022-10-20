@@ -60,7 +60,6 @@ pd_scoring_distributions_by_payoff_result = {
     + ([10] * 22),
 }
 
-
 gossip_value_distribution_by_gossip_value = {
     10: ([True] * 26) + ([False] * 74),
     9: ([True] * 17) + ([False] * 83),
@@ -73,6 +72,7 @@ gossip_value_distribution_by_gossip_value = {
     2: ([True] * 19) + ([False] * 81),
     1: ([True] * 22) + ([False] * 78),
     0: ([True] * 33) + ([False] * 67),
+    None: ([False]) * 2,
 }
 
 gossip_decision_distribution_by_neighbour_score = {
@@ -102,6 +102,21 @@ update_decision_distribution_by_gossip_value = {
     2: ([True] * 17) + ([False] * 83),
     1: ([True] * 16) + ([False] * 84),
     0: ([True] * 19) + ([False] * 81),
+}
+
+update_decision_distribution_by_neighbour_score = {
+    10: ([True] * 13) + ([False] * 87),
+    9: ([True] * 41) + ([False] * 59),
+    8: ([True] * 28) + ([False] * 72),
+    7: ([True] * 40) + ([False] * 60),
+    6: ([True] * 33) + ([False] * 67),
+    5: ([True] * 15) + ([False] * 85),
+    4: ([True] * 9) + ([False] * 91),
+    3: ([True] * 27) + ([False] * 73),
+    2: ([True] * 11) + ([False] * 89),
+    1: ([True] * 18) + ([False] * 82),
+    0: ([True] * 10) + ([False] * 90),
+    None: ([True] * 20) + ([False] * 80),
 }
 
 gossip_value_distribution_neighbour_score_none = {

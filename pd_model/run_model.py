@@ -15,7 +15,7 @@ if __name__ == "__main__":
         "gossip_logic": {"complex"},
     }
     n_iterations = 2
-    n_steps = 10
+    n_steps = 1000
     # combinations = 0
     # for i in parameter_config:
     #     if combinations == 0:

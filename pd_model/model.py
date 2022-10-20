@@ -12,7 +12,7 @@ from decisions import gossip_decision_distribution_by_neighbour_score
 from decisions import gossip_value_distribution_by_gossip_value
 from decisions import pd_decision_distributions_by_score
 from decisions import pd_scoring_distributions_by_payoff_result
-from decisions import update_decision_distribution_by_gossip_value
+from decisions import update_decision_distribution_by_neighbour_score
 from mapping import pd_payoff_matrix
 from mapping import pd_result_matrix
 from mapping import random_group_matching
@@ -174,7 +174,7 @@ class SimpleAgent(mesa.Agent):
                 self,
                 "update_decision_" + str(i),
                 random.choice(
-                    update_decision_distribution_by_gossip_value.get(
+                    update_decision_distribution_by_neighbour_score.get(
                         getattr(self, "neighbour_" + str(i) + "_reputation"), None
                     )
                 ),
