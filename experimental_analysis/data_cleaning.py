@@ -33,6 +33,7 @@ def read_experimental_data_from_csv(file_path):
         column_filters += [col for col in df if col.startswith(i)]
     df = df[column_filters].rename(columns=column_names_to_remap)
     df.columns = df.columns.str.replace(".", "_", regex=True)
+    df = df.drop(drop_column_list, axis=1)
     return df
 
 
@@ -190,6 +191,14 @@ def get_game_session_df(df, player_lookup_df):
             game_session_df = result
         round_number += 1
     return game_session_df
+
+
+drop_column_list = [
+    "participant_mturk_worker_id",
+    "participant_mturk_assignment_id",
+    "session_mturk_hitid",
+    "session_mturk_hitgroupid",
+]
 
 
 def convert_reputation_str_dict_to_int_dict(dict_to_convert, key_to_int, val_to_int, filter):

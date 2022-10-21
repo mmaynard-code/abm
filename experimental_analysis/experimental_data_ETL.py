@@ -10,7 +10,7 @@ from data_cleaning import merge_all_experimental_data_from_file_list
 directory = "C:/Users/mattu/OneDrive - Linköpings universitet/MSc Thesis/ResultsCSVs"
 csv_file_paths = get_experimental_csv_files_from_directory(directory, ".csv")
 df = merge_all_experimental_data_from_file_list(csv_file_paths)
-game_1 = [col for col in df if col.startswith("game_1_")]
+raw_df = df
 session_ids = df.session_id.unique()
 valid_files_processed = 0
 invalid_files = 0
@@ -30,21 +30,24 @@ for i in session_ids:
         invalid_files += 1
         break
     if i == "d837pvak":
-        all_session_df = game_session_df
+        all_game_session_df = game_session_df
     else:
-        result = pd.concat([all_session_df, game_session_df])
-        all_session_df = result
+        result = pd.concat([all_game_session_df, game_session_df])
+        all_game_session_df = result
 
-print(all_session_df.columns)
+print(all_game_session_df.columns)
 print("Number of valid sessions processed: " + str(valid_files_processed))
 print("Number of invalid sessions found: " + str(invalid_files))
 
-output_df = get_player_level_variables(all_session_df)
-print(output_df.columns)
-print(output_df.head())
-print(len(output_df.index))
+game_data_df = get_player_level_variables(all_game_session_df)
+
+print(game_data_df.head())
+print(len(game_data_df.index))
 print(26 * 16 * 16)
 
-output_df.sort_values(by=["session_id", "subsession_round_number", "id"]).to_csv(
-    "experimental_data.csv", sep=",", na_rep=None, index=False
+
+raw_df.sort_values(by=["session_id", "id"]).to_csv("all_raw_data.csv", sep=",", na_rep=None, index=False)
+
+game_data_df.sort_values(by=["session_id", "subsession_round_number", "id"]).to_csv(
+    "game_data.csv", sep=",", na_rep=None, index=False
 )

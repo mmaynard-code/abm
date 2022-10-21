@@ -5,7 +5,7 @@ library(ggbeeswarm)
 library(stringr)
 library(glue)
 
-df <- read.csv("experimental_data.csv") %>%
+df <- read.csv("game_data.csv") %>%
   mutate(treatment_ref = case_when(
     subsession_treatment_id == 2 ~ "A",
     subsession_treatment_id == 4 ~ "B",
