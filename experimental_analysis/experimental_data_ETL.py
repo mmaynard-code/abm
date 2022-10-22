@@ -23,6 +23,7 @@ for i in session_ids:
         continue
     try:
         player_lookup_df = get_session_player_lookup_df(session_df)
+        print(player_lookup_df.unique_id.unique())
         game_session_df = get_game_session_df(session_df, player_lookup_df)
         valid_files_processed += 1
     except Exception:
@@ -30,16 +31,20 @@ for i in session_ids:
         invalid_files += 1
         break
     if i == "d837pvak":
+        all_player_lookup_df = player_lookup_df
         all_game_session_df = game_session_df
     else:
-        result = pd.concat([all_game_session_df, game_session_df])
-        all_game_session_df = result
+        temp_player_df = pd.concat([all_player_lookup_df, player_lookup_df])
+        temp_game_df = pd.concat([all_game_session_df, game_session_df])
+        all_player_lookup_df = temp_player_df
+        all_game_session_df = temp_game_df
+
 
 print(all_game_session_df.columns)
 print("Number of valid sessions processed: " + str(valid_files_processed))
 print("Number of invalid sessions found: " + str(invalid_files))
 
-game_data_df = get_player_level_variables(all_game_session_df)
+game_data_df = get_player_level_variables(all_game_session_df, temp_player_df)
 
 print(game_data_df.head())
 print(len(game_data_df.index))

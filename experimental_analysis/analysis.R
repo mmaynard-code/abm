@@ -14,6 +14,8 @@ df <- read.csv("game_data.csv") %>%
 
 opponent_1_data <- df %>%
   select(
+    unique_id,
+    opponent_1_unique_id,
     player_decision1,
     opponent_1_pre_pd_reputation,
     player_payoffs,
@@ -22,6 +24,7 @@ opponent_1_data <- df %>%
     subsession_round_number) %>%
   rename(
     player_decision = player_decision1,
+    opponent_unique_id = opponent_1_unique_id,
     opponent_pre_pd_reputation = opponent_1_pre_pd_reputation,
     opponent_post_pd_reputation = opponent_1_post_pd_reputation,
     ) %>%
@@ -30,6 +33,8 @@ opponent_1_data <- df %>%
 
 opponent_2_data <- df %>%
   select(
+    unique_id,
+    opponent_2_unique_id,
     player_decision2,
     opponent_2_pre_pd_reputation,
     player_payoffs,
@@ -38,6 +43,7 @@ opponent_2_data <- df %>%
     subsession_round_number) %>%
   rename(
     player_decision = player_decision2,
+    opponent_unique_id = opponent_2_unique_id,
     opponent_pre_pd_reputation = opponent_2_pre_pd_reputation,
     opponent_post_pd_reputation = opponent_2_post_pd_reputation,
     ) %>%
@@ -54,15 +60,20 @@ pd_decision_data <- bind_rows(
       player_decision == "Y" ~ "Defect",
     ),
   ) %>%
+  rename(
+    player_unique_id = unique_id) %>%
   filter(!(player_payoff == 0 & player_decision == "Defect"))
-
+length(unique(df$unique_id))
 for (i in seq(1,3,1)) {
   df_to_bind <- df %>%
     select(
       starts_with(glue("neighbour_{i}")),
+      unique_id,
       treatment_ref)  %>%
     rename_all(
       ~str_replace(.x,glue("neighbour_{i}_"),"neighbour_")) %>%
+    rename(
+      player_unique_id = unique_id) %>%
     mutate(
       neighbour_share_decision = case_when(
         neighbour_share_decision == "Yes" ~ "Share",
@@ -76,18 +87,21 @@ for (i in seq(1,3,1)) {
     share_decision_data <- bind_rows(share_decision_data, df_to_bind)
   }
 }
-
+unique(df_to_bind$neighbour_unique_id)
 for (i in seq(1,16,1)) {
   update_df <- df %>%
     select(
-      starts_with(glue("other_player_{i}_"))) %>%
+      starts_with(glue("other_player_{i}_")),
+      unique_id) %>%
+    rename(player_unique_id = unique_id) %>%
     rename_all(
-      ~str_replace(.x,glue("other_player_{i}_"),"")
-    )
+      ~str_replace(.x,glue("other_player_{i}_"),"")) %>%
+    rename(target_unique_id = unique_id)
+
   rep_df <- df %>%
     select(
       starts_with("neighbour_"),
-      -!ends_with("reputation"),
+      -!ends_with(c("reputation","unique_id")),
       treatment_ref
     )
   combined_df <- bind_cols(update_df, rep_df)
