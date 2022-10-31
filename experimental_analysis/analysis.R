@@ -208,7 +208,7 @@ abm_gossip_value_distribution_by_neighbour_score <- share_decision_data %>%
     n_9 = round(mean(neighbour_share_score_9, na.rm=T),2),
     n_10 = round(mean(neighbour_share_score_10, na.rm=T),2)) %>%
   mutate(
-    freq = n / sum(n)) %>%
+    freq = round((n / sum(n)),2)) %>%
   select(-n) %>%
   relocate("freq", .after = "neighbour_share_decision") %>%
   filter(neighbour_share_decision == "Share") %>%
@@ -224,6 +224,9 @@ abm_gossip_value_distribution_by_neighbour_score <- share_decision_data %>%
 #  summarise(n = n()) %>%
 #  mutate(freq = n / sum(n)) %>%
 #  select(-n)
+
+test_df <- read.csv("test_data.csv")
+unique(test_df$other_player_1_pre_pd_reputation_group_session_mean)
 
 update_decision_data_filtered <- update_decision_data %>%
   mutate(

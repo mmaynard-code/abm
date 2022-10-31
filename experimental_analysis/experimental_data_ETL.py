@@ -1,6 +1,7 @@
 import traceback
 
 import pandas as pd
+from data_cleaning import get_consensus_variables
 from data_cleaning import get_experimental_csv_files_from_directory
 from data_cleaning import get_game_session_df
 from data_cleaning import get_player_level_variables
@@ -44,12 +45,13 @@ print(all_game_session_df.columns)
 print("Number of valid sessions processed: " + str(valid_files_processed))
 print("Number of invalid sessions found: " + str(invalid_files))
 
-game_data_df = get_player_level_variables(all_game_session_df, temp_player_df)
-
+game_data_df = get_player_level_variables(all_game_session_df, all_player_lookup_df)
 print(game_data_df.head())
 print(len(game_data_df.index))
 print(26 * 16 * 16)
-
+game_data_df = get_consensus_variables(game_data_df)
+print(game_data_df.head())
+print(len(game_data_df.index))
 
 raw_df.sort_values(by=["session_id", "id"]).to_csv("all_raw_data.csv", sep=",", na_rep=None, index=False)
 
