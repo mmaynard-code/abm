@@ -322,7 +322,7 @@ def get_consensus_variables(df):
             round_df = session_df.query(f"subsession_round_number == {j}")
             round_df = get_session_level_consensus(round_df)
             round_df = get_network_level_consensus(round_df, player_ids)
-            # round_df = get_neighbour_level_consensus(round_df, player_ids)
+            round_df = get_neighbour_level_consensus(round_df, player_ids)
             output_round_df = round_df.copy()
             if row_number == 0:
                 output_df = output_round_df
