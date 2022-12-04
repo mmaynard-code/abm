@@ -448,7 +448,7 @@ def get_neighbour_level_consensus(df, player_ids):
             # player_df.insert(58, f"other_player_{k}_post_pd_consensus_group_neighbour_var", other_player_post_pd_reputation_neighbour_var)
             # player_df.insert(59, f"other_player_{k}_final_consensus_group_neighbour_mean", other_player_final_reputation_neighbour_mean)
             # player_df.insert(60, f"other_player_{k}_final_consensus_group_neighbour_var", other_player_final_reputation_neighbour_var)
-            if m == 0:
+            if m == player_ids[0]:
                 temp_df = player_df
             else:
                 result = pd.concat([temp_df, player_df])
