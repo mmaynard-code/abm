@@ -63,7 +63,7 @@ pd_decision_data <- bind_rows(
   rename(
     player_unique_id = unique_id) %>%
   filter(!(player_payoff == 0 & player_decision == "Defect"))
-length(unique(df$unique_id))
+
 for (i in seq(1,3,1)) {
   df_to_bind <- df %>%
     select(
@@ -87,7 +87,7 @@ for (i in seq(1,3,1)) {
     share_decision_data <- bind_rows(share_decision_data, df_to_bind)
   }
 }
-unique(df_to_bind$neighbour_unique_id)
+
 for (i in seq(1,16,1)) {
   update_df <- df %>%
     select(
@@ -110,7 +110,7 @@ for (i in seq(1,16,1)) {
       select(
         starts_with(glue("neighbour_{j}_"))) %>%
       rename_all(
-        ~str_replace(.x,glue("neighbour_{j}_"),"neighbour_")
+        ~str_replace(.x, glue("neighbour_{j}_"),"neighbour_")
       )
     other_df <- combined_df %>%
       select(
@@ -227,13 +227,12 @@ abm_gossip_value_distribution_by_neighbour_score <- share_decision_data %>%
 
 update_decision_data_filtered <- update_decision_data %>%
   mutate(
-    gossip_difference = abs(neighbour_gossip - pre_pd_reputation)
+    gossip_change_amount = final_reputation - post_pd_reputation
   ) %>%
   filter(
-    gossip_available >= 1
-    & !is.na(gossip_difference)
-    & gossip_difference > 0
-    & (neighbour_pre_gossip_consensus > 0 | neighbour_gossip_new_flag == 'True')
+    #gossip_available_values != "[None]"
+    gossip_available > 1
+    & gossip_change_amount != 0
     )
 
 abm_update_decision_distribution_by_gossip_value <- update_decision_data_filtered %>%
