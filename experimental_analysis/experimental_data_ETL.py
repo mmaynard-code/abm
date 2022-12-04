@@ -10,7 +10,7 @@ from data_cleaning import merge_all_experimental_data_from_file_list
 
 directory = "C:/Users/mattu/OneDrive - Linköpings universitet/MSc Thesis/ResultsCSVs"
 csv_file_paths = get_experimental_csv_files_from_directory(directory, ".csv")
-df = merge_all_experimental_data_from_file_list(csv_file_paths)
+df = merge_all_experimental_data_from_file_list(csv_file_paths[0:1])
 raw_df = df
 session_ids = df.session_id.unique()
 valid_files_processed = 0

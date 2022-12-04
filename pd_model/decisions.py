@@ -60,7 +60,7 @@ pd_scoring_distributions_by_payoff_result = {
     + ([10] * 22),
 }
 
-gossip_value_distribution_by_gossip_value = {
+gossip_decision_distribution_by_gossip_value = {
     10: ([True] * 26) + ([False] * 74),
     9: ([True] * 17) + ([False] * 83),
     8: ([True] * 16) + ([False] * 84),
@@ -544,3 +544,11 @@ update_value_distribution_by_neighbour_score = {
 #     0: ([0]*34) + ([1]*2) + ([2]*2) + ([3]*1) + ([4]*0) + ([5]*4) + ([6]*0) + ([7]*2) + ([8]*2) + ([9]*2) + ([10]*50),
 #     None: ([0]*41) + ([1]*2) + ([2]*3) + ([3]*3) + ([4]*1) + ([5]*4) + ([6]*3) + ([7]*5) + ([8]*6) + ([9]*11) + ([10]*45),
 # }
+
+# Test of nested table random.choice call
+# i = None
+# j = None
+# import random##
+# current_decision = random.choice(update_value_distribution_by_neighbour_score.get(i).get(j, [None]))
+
+# print(current_decision)

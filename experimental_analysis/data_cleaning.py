@@ -241,6 +241,7 @@ def get_player_level_variables(df, lookup_df):
     session_list = df.session_id.unique()
     row_number = 0
     for i in session_list:
+        print(i)
         player_lookup_df = lookup_df.query(f"session_id == '{i}'")
         session_df = df.query(f"session_id == '{i}'")
         player_ids = session_df.index.unique()
@@ -305,7 +306,6 @@ def get_player_level_variables(df, lookup_df):
                     result = pd.concat([output_df, output_round_df])
                     output_df = result
                 row_number += 1
-        print(i)
     return output_df
 
 
@@ -313,10 +313,12 @@ def get_consensus_variables(df):
     session_list = df.session_id.unique()
     row_number = 0
     for i in session_list:
+        print(i)
         session_df = df.query(f"session_id == '{i}'")
         player_ids = session_df.index.unique()
         round_list = session_df.subsession_round_number.unique()
         for j in round_list:
+            print(j)
             round_df = session_df.query(f"subsession_round_number == {j}")
             round_df = get_session_level_consensus(round_df)
             round_df = get_network_level_consensus(round_df, player_ids)
@@ -328,7 +330,6 @@ def get_consensus_variables(df):
                 result = pd.concat([output_df, output_round_df])
                 output_df = result
             row_number += 1
-        print(i)
     return output_df
 
 
@@ -346,36 +347,32 @@ def var_unless_none(value_list):
         return None
 
 
+def list_unless_none(value_list):
+    if len(value_list) > 0:
+        return list(filter(lambda item: item is not None, value_list))
+    else:
+        return list(None)
+
+
 def get_session_level_consensus(df):
     for k in range(1, 17):
         other_player_pre_pd_reputation = list(df[f"other_player_{k}_pre_pd_reputation"])
         other_player_post_pd_reputation = list(df[f"other_player_{k}_post_pd_reputation"])
         other_player_final_reputation = list(df[f"other_player_{k}_final_reputation"])
-        other_player_pre_pd_reputation = list(filter(lambda item: item is not None, other_player_pre_pd_reputation))
-        other_player_post_pd_reputation = list(filter(lambda item: item is not None, other_player_post_pd_reputation))
-        other_player_final_reputation = list(filter(lambda item: item is not None, other_player_final_reputation))
-        other_player_pre_pd_reputation_session_mean = mean_unless_none(other_player_pre_pd_reputation)
-        other_player_pre_pd_reputation_session_var = var_unless_none(other_player_pre_pd_reputation)
-        other_player_post_pd_reputation_session_mean = mean_unless_none(other_player_post_pd_reputation)
-        other_player_post_pd_reputation_session_var = var_unless_none(other_player_post_pd_reputation)
-        other_player_final_reputation_session_mean = mean_unless_none(other_player_pre_pd_reputation)
-        other_player_final_reputation_session_var = var_unless_none(other_player_pre_pd_reputation)
-        df.insert(
-            55, f"other_player_{k}_pre_pd_reputation_group_session_mean", other_player_pre_pd_reputation_session_mean
-        )
-        df.insert(
-            56, f"other_player_{k}_pre_pd_reputation_group_session_var", other_player_pre_pd_reputation_session_var
-        )
-        df.insert(
-            57, f"other_player_{k}_post_pd_reputation_group_session_mean", other_player_post_pd_reputation_session_mean
-        )
-        df.insert(
-            58, f"other_player_{k}_post_pd_reputation_group_session_var", other_player_post_pd_reputation_session_var
-        )
-        df.insert(
-            59, f"other_player_{k}_final_reputation_group_session_mean", other_player_final_reputation_session_mean
-        )
-        df.insert(60, f"other_player_{k}_final_reputation_group_session_var", other_player_final_reputation_session_var)
+        df.insert(55, f"other_player_{k}_pre_pd_consensus_group_session", [other_player_pre_pd_reputation] * 16)
+        df.insert(56, f"other_player_{k}_post_pd_consensus_group_session", [other_player_post_pd_reputation] * 16)
+        df.insert(57, f"other_player_{k}_final_consensus_group_session", [other_player_final_reputation] * 16)
+        # other_player_pre_pd_reputation_session_var = var_unless_none(other_player_pre_pd_reputation)
+        # other_player_post_pd_reputation_session_mean = mean_unless_none(other_player_post_pd_reputation)
+        # other_player_post_pd_reputation_session_var = var_unless_none(other_player_post_pd_reputation)
+        # other_player_final_reputation_session_mean = mean_unless_none(other_player_pre_pd_reputation)
+        # other_player_final_reputation_session_var = var_unless_none(other_player_pre_pd_reputation)
+        # df.insert(55, f"other_player_{k}_pre_pd_consensus_group_session_mean", other_player_pre_pd_reputation_session_mean)
+        # df.insert(56, f"other_player_{k}_pre_pd_consensus_group_session_var", other_player_pre_pd_reputation_session_var)
+        # df.insert(57, f"other_player_{k}_post_pd_consensus_group_session_mean", other_player_post_pd_reputation_session_mean)
+        # df.insert(58, f"other_player_{k}_post_pd_consensus_group_session_var", other_player_post_pd_reputation_session_var)
+        # df.insert(59, f"other_player_{k}_final_consensus_group_session_mean", other_player_final_reputation_session_mean)
+        # df.insert(60, f"other_player_{k}_final_consensus_group_session_var", other_player_final_reputation_session_var)
         defrag_df = df
         df = defrag_df
     output_df = defrag_df.copy()
@@ -389,41 +386,27 @@ def get_network_level_consensus(df, player_ids):
             other_player_pre_pd_reputation = list(network_consensus_df[f"other_player_{k}_pre_pd_reputation"])
             other_player_post_pd_reputation = list(network_consensus_df[f"other_player_{k}_post_pd_reputation"])
             other_player_final_reputation = list(network_consensus_df[f"other_player_{k}_final_reputation"])
-            other_player_pre_pd_reputation = list(filter(lambda item: item is not None, other_player_pre_pd_reputation))
-            other_player_post_pd_reputation = list(
-                filter(lambda item: item is not None, other_player_post_pd_reputation)
-            )
-            other_player_final_reputation = list(filter(lambda item: item is not None, other_player_final_reputation))
-            other_player_pre_pd_reputation_network_mean = mean_unless_none(other_player_pre_pd_reputation)
-            other_player_pre_pd_reputation_network_var = var_unless_none(other_player_pre_pd_reputation)
-            other_player_post_pd_reputation_network_mean = mean_unless_none(other_player_post_pd_reputation)
-            other_player_post_pd_reputation_network_var = var_unless_none(other_player_post_pd_reputation)
-            other_player_final_reputation_network_mean = mean_unless_none(other_player_pre_pd_reputation)
-            other_player_final_reputation_network_var = var_unless_none(other_player_pre_pd_reputation)
             network_consensus_df.insert(
-                55,
-                f"other_player_{k}_pre_pd_reputation_group_network_mean",
-                other_player_pre_pd_reputation_network_mean,
+                55, f"other_player_{k}_pre_pd_consensus_group_network", [other_player_pre_pd_reputation] * 8
             )
             network_consensus_df.insert(
-                56, f"other_player_{k}_pre_pd_reputation_group_network_var", other_player_pre_pd_reputation_network_var
+                56, f"other_player_{k}_post_pd_consensus_group_network", [other_player_post_pd_reputation] * 8
             )
             network_consensus_df.insert(
-                57,
-                f"other_player_{k}_post_pd_reputation_group_network_mean",
-                other_player_post_pd_reputation_network_mean,
+                57, f"other_player_{k}_final_consensus_group_network", [other_player_final_reputation] * 8
             )
-            network_consensus_df.insert(
-                58,
-                f"other_player_{k}_post_pd_reputation_group_network_var",
-                other_player_post_pd_reputation_network_var,
-            )
-            network_consensus_df.insert(
-                59, f"other_player_{k}_final_reputation_group_network_mean", other_player_final_reputation_network_mean
-            )
-            network_consensus_df.insert(
-                60, f"other_player_{k}_final_reputation_group_network_var", other_player_final_reputation_network_var
-            )
+            # other_player_pre_pd_reputation_network_mean = mean_unless_none(other_player_pre_pd_reputation)
+            # other_player_pre_pd_reputation_network_var = var_unless_none(other_player_pre_pd_reputation)
+            # other_player_post_pd_reputation_network_mean = mean_unless_none(other_player_post_pd_reputation)
+            # other_player_post_pd_reputation_network_var = var_unless_none(other_player_post_pd_reputation)
+            # other_player_final_reputation_network_mean = mean_unless_none(other_player_pre_pd_reputation)
+            # other_player_final_reputation_network_var = var_unless_none(other_player_pre_pd_reputation)
+            # network_consensus_df.insert(55, f"other_player_{k}_pre_pd_consensus_group_network_mean", other_player_pre_pd_reputation_network_mean)
+            # network_consensus_df.insert(56, f"other_player_{k}_pre_pd_consensus_group_network_var", other_player_pre_pd_reputation_network_var)
+            # network_consensus_df.insert(57, f"other_player_{k}_post_pd_consensus_group_network_mean", other_player_post_pd_reputation_network_mean,)
+            # network_consensus_df.insert(58, f"other_player_{k}_post_pd_consensus_group_network_var", other_player_post_pd_reputation_network_var)
+            # network_consensus_df.insert(59, f"other_player_{k}_final_consensus_group_network_mean", other_player_final_reputation_network_mean)
+            # network_consensus_df.insert(60, f"other_player_{k}_final_consensus_group_network_var", other_player_final_reputation_network_var)
             if m == 0:
                 temp_df = network_consensus_df
             else:
@@ -444,47 +427,23 @@ def get_neighbour_level_consensus(df, player_ids):
             other_player_pre_pd_reputation = list(neighbour_consensus_df[f"other_player_{k}_pre_pd_reputation"])
             other_player_post_pd_reputation = list(neighbour_consensus_df[f"other_player_{k}_post_pd_reputation"])
             other_player_final_reputation = list(neighbour_consensus_df[f"other_player_{k}_final_reputation"])
-            other_player_pre_pd_reputation = list(filter(lambda item: item is not None, other_player_pre_pd_reputation))
-            other_player_post_pd_reputation = list(
-                filter(lambda item: item is not None, other_player_post_pd_reputation)
-            )
-            other_player_final_reputation = list(filter(lambda item: item is not None, other_player_final_reputation))
-            other_player_pre_pd_reputation_neighbour_mean = mean_unless_none(other_player_pre_pd_reputation)
-            other_player_pre_pd_reputation_neighbour_var = var_unless_none(other_player_pre_pd_reputation)
-            other_player_post_pd_reputation_neighbour_mean = mean_unless_none(other_player_post_pd_reputation)
-            other_player_post_pd_reputation_neighbour_var = var_unless_none(other_player_post_pd_reputation)
-            other_player_final_reputation_neighbour_mean = mean_unless_none(other_player_pre_pd_reputation)
-            other_player_final_reputation_neighbour_var = var_unless_none(other_player_pre_pd_reputation)
+            player_df.insert(55, f"other_player_{k}_pre_pd_consensus_group_neighbour", [other_player_pre_pd_reputation])
             player_df.insert(
-                55,
-                f"other_player_{k}_pre_pd_reputation_group_neighbour_mean",
-                other_player_pre_pd_reputation_neighbour_mean,
+                56, f"other_player_{k}_post_pd_consensus_group_neighbour", [other_player_post_pd_reputation]
             )
-            player_df.insert(
-                56,
-                f"other_player_{k}_pre_pd_reputation_group_neighbour_var",
-                other_player_pre_pd_reputation_neighbour_var,
-            )
-            player_df.insert(
-                57,
-                f"other_player_{k}_post_pd_reputation_group_neighbour_mean",
-                other_player_post_pd_reputation_neighbour_mean,
-            )
-            player_df.insert(
-                58,
-                f"other_player_{k}_post_pd_reputation_group_neighbour_var",
-                other_player_post_pd_reputation_neighbour_var,
-            )
-            player_df.insert(
-                59,
-                f"other_player_{k}_final_reputation_group_neighbour_mean",
-                other_player_final_reputation_neighbour_mean,
-            )
-            player_df.insert(
-                60,
-                f"other_player_{k}_final_reputation_group_neighbour_var",
-                other_player_final_reputation_neighbour_var,
-            )
+            player_df.insert(57, f"other_player_{k}_final_consensus_group_neighbour", [other_player_final_reputation])
+            # other_player_pre_pd_reputation_neighbour_mean = mean_unless_none(other_player_pre_pd_reputation)
+            # other_player_pre_pd_reputation_neighbour_var = var_unless_none(other_player_pre_pd_reputation)
+            # other_player_post_pd_reputation_neighbour_mean = mean_unless_none(other_player_post_pd_reputation)
+            # other_player_post_pd_reputation_neighbour_var = var_unless_none(other_player_post_pd_reputation)
+            # other_player_final_reputation_neighbour_mean = mean_unless_none(other_player_pre_pd_reputation)
+            # other_player_final_reputation_neighbour_var = var_unless_none(other_player_pre_pd_reputation)
+            # player_df.insert(55, f"other_player_{k}_pre_pd_consensus_group_neighbour_mean", other_player_pre_pd_reputation_neighbour_mean)
+            # player_df.insert(56, f"other_player_{k}_pre_pd_consensus_group_neighbour_var", other_player_pre_pd_reputation_neighbour_var)
+            # player_df.insert(57, f"other_player_{k}_post_pd_consensus_group_neighbour_mean", other_player_post_pd_reputation_neighbour_mean)
+            # player_df.insert(58, f"other_player_{k}_post_pd_consensus_group_neighbour_var", other_player_post_pd_reputation_neighbour_var)
+            # player_df.insert(59, f"other_player_{k}_final_consensus_group_neighbour_mean", other_player_final_reputation_neighbour_mean)
+            # player_df.insert(60, f"other_player_{k}_final_consensus_group_neighbour_var", other_player_final_reputation_neighbour_var)
             if m == player_ids[0]:
                 temp_df = player_df
             else:

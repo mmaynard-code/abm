@@ -71,3 +71,10 @@ def get_neighbour_maps_by_treatment_ref(agent_id, network_agents, treatment_ref)
 
     filtered_neighbour_list = [x for x in neighbour_list if x > 0 and x <= network_agents]
     return filtered_neighbour_list
+
+
+def list_unless_none(value_list):
+    if len(value_list) > 0:
+        return list(filter(lambda item: item is not None, value_list))
+    else:
+        return list(None)

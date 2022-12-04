@@ -161,7 +161,7 @@ abm_pd_scoring_distributions_by_payoff_result <- pd_decision_data %>%
 #  mutate(freq = n / sum(n)) %>%
 #  select(-n)
 
-abm_gossip_value_distribution_by_gossip_value <- share_decision_data %>%
+abm_gossip_decision_distribution_by_gossip_value <- share_decision_data %>%
   filter(neighbour_share_decision != "Sharing Not Possible") %>%
   group_by(
     #treatment_ref,
@@ -225,9 +225,6 @@ abm_gossip_value_distribution_by_neighbour_score <- share_decision_data %>%
 #  mutate(freq = n / sum(n)) %>%
 #  select(-n)
 
-test_df <- read.csv("test_data.csv")
-unique(test_df$other_player_1_pre_pd_reputation_group_session_mean)
-
 update_decision_data_filtered <- update_decision_data %>%
   mutate(
     gossip_difference = abs(neighbour_gossip - pre_pd_reputation)
@@ -286,6 +283,26 @@ abm_update_value_distribution_by_neighbour_score <- update_decision_data_filtere
 #  mutate(freq = n / sum(n)) %>%
 #  select(-n)
 
+library(data.table)
+
+for (i in colnames(df)) {
+  if (i %like% "reputation_group") {
+    print(i)
+  }
+}
+
+df2 <- read.csv("game_data.csv") %>%
+  mutate(treatment_ref = case_when(
+    subsession_treatment_id == 2 ~ "A",
+    subsession_treatment_id == 4 ~ "B",
+    subsession_treatment_id == 3 ~ "C",
+  )) %>%
+  select(-X)
+
+all_equal(df, df2)
+
+write.csv(df, "game_data.csv")
+
 write.csv(pd_decision_data, "pd_decision_data.csv")
 write.csv(share_decision_data, "share_decision_data.csv")
 write.csv(update_decision_data, "update_decision_data.csv")
@@ -293,8 +310,8 @@ write.csv(update_decision_data_filtered, "update_decision_data_filtered.csv")
 
 write.csv(abm_pd_decision_distributions_by_score, "abm_pd_decision_distributions_by_score.csv")
 write.csv(abm_pd_scoring_distributions_by_payoff_result, "abm_pd_scoring_distributions_by_payoff_result.csv")
-write.csv(abm_gossip_value_distribution_by_gossip_value, "abm_gossip_value_distribution_by_gossip_value.csv")
-write.csv(abm_gossip_value_distribution_by_neighbour_score, "abm_gossip_value_distribution_by_neighbour_score.csv")
+write.csv(abm_gossip_decision_distribution_by_gossip_value, "abm_gossip_decision_distribution_by_gossip_value.csv")
+write.csv(abm_gossip_decision_distribution_by_neighbour_score, "abm_gossip_value_distribution_by_neighbour_score.csv")
 write.csv(abm_update_decision_distribution_by_gossip_value, "abm_update_decision_distribution_by_gossip_value.csv")
 write.csv(abm_update_decision_distribution_by_neighbour_score, "abm_update_decision_distribution_by_neighbour_score.csv")
 write.csv(abm_update_value_distribution_by_neighbour_score, "abm_update_value_distribution_by_neighbour_score.csv")
