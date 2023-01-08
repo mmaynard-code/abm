@@ -12,7 +12,6 @@ if __name__ == "__main__":
         "total_networks": {2},
         "treatment_ref": {"C"},
         "game_type": {"gossip"},
-        "gossip_logic": {"complex"},
     }
     n_iterations = 1
     n_steps = 10

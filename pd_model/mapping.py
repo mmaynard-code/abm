@@ -78,3 +78,14 @@ def list_unless_none(value_list):
         return list(filter(lambda item: item is not None, value_list))
     else:
         return list(None)
+
+
+def refactor_reputation_scores(reputation_score_value):
+    if reputation_score_value is None:
+        reputation_score_value = 0
+    elif reputation_score_value >= 7:
+        reputation_score_value = 1
+    elif reputation_score_value <= 4:
+        reputation_score_value = -1
+    else:
+        reputation_score_value = 0
