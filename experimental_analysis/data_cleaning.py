@@ -18,12 +18,14 @@ def read_experimental_data_from_csv(file_path):
     df = pd.read_csv(file_path).rename(str.lower, axis="columns")
     column_names_to_remap = {
         "participant.id_in_session": "id",
+        "participant.code": "unique_id",
         "session.code": "session_id",
     }
     column_filter_list = [
         "participant",
         "game",
         "session",
+        "gdpr",
         "p1_survey",
         "end_survey",
         "payment_info",
@@ -33,6 +35,7 @@ def read_experimental_data_from_csv(file_path):
         column_filters += [col for col in df if col.startswith(i)]
     df = df[column_filters].rename(columns=column_names_to_remap)
     df.columns = df.columns.str.replace(".", "_", regex=True)
+    df = df.drop(drop_column_list, axis=1)
     return df
 
 
@@ -65,7 +68,10 @@ def get_session_player_lookup_df(df):
         result = pd.concat([player_lookup_df, new_players_df])
         player_lookup_df = result
         player_lookup_df = player_lookup_df.drop_duplicates()
-    return player_lookup_df.sort_values(by="id")
+
+    unique_id_lookup_df = df[["id", "unique_id", "session_id"]].sort_values(by="id")
+    new_lookup_df = player_lookup_df.merge(unique_id_lookup_df, how="left", on="id")
+    return new_lookup_df.sort_values(by="id")
 
 
 def replace_player_labels_with_ids(df, player_lookup_df):
@@ -78,7 +84,7 @@ def replace_player_labels_with_ids(df, player_lookup_df):
 def get_game_session_df(df, player_lookup_df):
     round_number = 1
     while round_number <= 16:
-        game_filter = ["session_id", "id"]
+        game_filter = ["session_id", "id", "unique_id"]
         game_filter += [col for col in df if col.startswith(f"game_{round_number}_")]
         game_round_df = df[game_filter]
         game_round_df.columns = game_round_df.columns.str.replace(f"game_{round_number}_", "")
@@ -91,9 +97,9 @@ def get_game_session_df(df, player_lookup_df):
         all_players_received_reputation_list = []
         all_players_final_reputation_list = []
         for i in player_ids:
-            neighbours = str(game_round_df["player_neighbours"].get(i)).split(",")
-            current_other_players = str(game_round_df["player_other_players"].get(i)).split(",")
-            final_reputation = str(game_round_df["player_my_ratings"].get(i)).split(",")[0:15]
+            neighbours = str(game_round_df.query(f"index == {i}").iloc[0]["player_neighbours"]).split(",")
+            current_other_players = str(game_round_df.query(f"index == {i}").iloc[0]["player_other_players"]).split(",")
+            final_reputation = str(game_round_df.query(f"index == {i}").iloc[0]["player_my_ratings"]).split(",")[0:15]
             if round_number >= 6:
                 post_pd_reputation = str(game_round_df["player_my_ratings_results"].get(i)).split(",")[0:15]
                 neighbour_1_shared_reputation = str(game_round_df["player_shared_ratings"].get(i)).split(",")[:-1][
@@ -192,6 +198,14 @@ def get_game_session_df(df, player_lookup_df):
     return game_session_df
 
 
+drop_column_list = [
+    "participant_mturk_worker_id",
+    "participant_mturk_assignment_id",
+    "session_mturk_hitid",
+    "session_mturk_hitgroupid",
+]
+
+
 def convert_reputation_str_dict_to_int_dict(dict_to_convert, key_to_int, val_to_int, filter):
     new_dict = {}
     try:
@@ -223,24 +237,26 @@ def convert_reputation_str_dict_to_int_dict(dict_to_convert, key_to_int, val_to_
     return new_dict
 
 
-def get_player_level_variables(df):
+def get_player_level_variables(df, lookup_df):
     session_list = df.session_id.unique()
     row_number = 0
     for i in session_list:
+        print(i)
+        player_lookup_df = lookup_df.query(f"session_id == '{i}'")
         session_df = df.query(f"session_id == '{i}'")
         player_ids = session_df.index.unique()
+        round_list = session_df.subsession_round_number.unique()
         for j in player_ids:
             player_df = session_df.query(f"index == {j}")
-            round_list = player_df.subsession_round_number.unique()
             known_opponents_list = []
             known_gossip_list = []
             known_all_list = []
             for k in round_list:
                 round_df = player_df.query(f"subsession_round_number == {k}")
                 # Add in known_opponents
-                opponents = str(round_df["player_opponents"].get(j)).split(",")
-                neighbours = str(round_df["player_neighbours"].get(j)).split(",")
-                received_ratings = round_df["received_reputation_dict"].get(j)
+                neighbours = str(round_df.query(f"index == {j}").iloc[0]["player_neighbours"]).split(",")
+                opponents = str(round_df.query(f"index == {j}").iloc[0]["player_opponents"]).split(",")
+                received_ratings = round_df.query(f"index == {j}").iloc[0]["received_reputation_dict"]
                 gossip_list = []
                 if k >= 6:
                     for n in range(0, len(neighbours)):
@@ -257,11 +273,11 @@ def get_player_level_variables(df):
                 round_df.insert(26, "known_all", [all_known_to_update])
 
                 # Clean player reputation cols
-                final_reputation_dict = round_df["final_reputation_dict"].get(j)
+                final_reputation_dict = round_df.query(f"index == {j}").iloc[0]["final_reputation_dict"]
                 if k >= 6:
-                    post_pd_reputation_dict = round_df["post_pd_reputation_dict"].get(j)
+                    post_pd_reputation_dict = round_df.query(f"index == {j}").iloc[0]["post_pd_reputation_dict"]
                 else:
-                    post_pd_reputation_dict = round_df["final_reputation_dict"].get(j)
+                    post_pd_reputation_dict = round_df.query(f"index == {j}").iloc[0]["final_reputation_dict"]
                 filtered_final_reputation_dict = filter_dict_by_list(final_reputation_dict[0], all_known_to_update)
                 filtered_post_pd_reputation_dict = filter_dict_by_list(post_pd_reputation_dict[0], all_known_to_update)
                 round_df = round_df.drop("final_reputation_dict", axis=1)
@@ -279,17 +295,165 @@ def get_player_level_variables(df):
                     pre_pd_reputation = round_df["final_reputation_dict"]
 
                 # Add in opponent_reputation pre_pd and neighbour_reputation pre_share and neighbour_reputation post_share
-                round_df = get_opponent_variables(round_df, k, j)
-                round_df = get_neighbour_variables(round_df, k, j)
-                round_df = get_other_player_reputations(round_df, k, j)
+                round_df = get_opponent_variables(round_df, k, j, player_lookup_df)
+                round_df = get_neighbour_variables(round_df, k, j, player_lookup_df)
+                round_df = get_other_player_reputations(round_df, k, j, player_lookup_df)
 
                 output_round_df = round_df
                 if row_number == 0:
                     output_df = output_round_df
+                else:
+                    result = pd.concat([output_df, output_round_df])
+                    output_df = result
+                row_number += 1
+    return output_df
+
+
+def get_consensus_variables(df):
+    session_list = df.session_id.unique()
+    row_number = 0
+    for i in session_list:
+        print(i)
+        session_df = df.query(f"session_id == '{i}'")
+        player_ids = session_df.index.unique()
+        round_list = session_df.subsession_round_number.unique()
+        for j in round_list:
+            print(j)
+            round_df = session_df.query(f"subsession_round_number == {j}")
+            round_df = get_session_level_consensus(round_df)
+            round_df = get_network_level_consensus(round_df, player_ids)
+            round_df = get_neighbour_level_consensus(round_df, player_ids)
+            output_round_df = round_df.copy()
+            if row_number == 0:
+                output_df = output_round_df
+            else:
                 result = pd.concat([output_df, output_round_df])
                 output_df = result
-                row_number += 1
-        print(i)
+            row_number += 1
+    return output_df
+
+
+def mean_unless_none(value_list):
+    if len(value_list) > 0:
+        return np.nanmean(value_list)
+    else:
+        return None
+
+
+def var_unless_none(value_list):
+    if len(value_list) > 0:
+        return np.nanvar(value_list)
+    else:
+        return None
+
+
+def list_unless_none(value_list):
+    if len(value_list) > 0:
+        return list(filter(lambda item: item is not None, value_list))
+    else:
+        return list(None)
+
+
+def get_session_level_consensus(df):
+    for k in range(1, 17):
+        other_player_pre_pd_reputation = list(df[f"other_player_{k}_pre_pd_reputation"])
+        other_player_post_pd_reputation = list(df[f"other_player_{k}_post_pd_reputation"])
+        other_player_final_reputation = list(df[f"other_player_{k}_final_reputation"])
+        df.insert(55, f"other_player_{k}_pre_pd_consensus_group_session", [other_player_pre_pd_reputation] * 16)
+        df.insert(56, f"other_player_{k}_post_pd_consensus_group_session", [other_player_post_pd_reputation] * 16)
+        df.insert(57, f"other_player_{k}_final_consensus_group_session", [other_player_final_reputation] * 16)
+        # other_player_pre_pd_reputation_session_var = var_unless_none(other_player_pre_pd_reputation)
+        # other_player_post_pd_reputation_session_mean = mean_unless_none(other_player_post_pd_reputation)
+        # other_player_post_pd_reputation_session_var = var_unless_none(other_player_post_pd_reputation)
+        # other_player_final_reputation_session_mean = mean_unless_none(other_player_pre_pd_reputation)
+        # other_player_final_reputation_session_var = var_unless_none(other_player_pre_pd_reputation)
+        # df.insert(55, f"other_player_{k}_pre_pd_consensus_group_session_mean", other_player_pre_pd_reputation_session_mean)
+        # df.insert(56, f"other_player_{k}_pre_pd_consensus_group_session_var", other_player_pre_pd_reputation_session_var)
+        # df.insert(57, f"other_player_{k}_post_pd_consensus_group_session_mean", other_player_post_pd_reputation_session_mean)
+        # df.insert(58, f"other_player_{k}_post_pd_consensus_group_session_var", other_player_post_pd_reputation_session_var)
+        # df.insert(59, f"other_player_{k}_final_consensus_group_session_mean", other_player_final_reputation_session_mean)
+        # df.insert(60, f"other_player_{k}_final_consensus_group_session_var", other_player_final_reputation_session_var)
+        defrag_df = df
+        df = defrag_df
+    output_df = defrag_df.copy()
+    return output_df
+
+
+def get_network_level_consensus(df, player_ids):
+    for k in range(1, 17):
+        if k == 1:
+            input_df = df
+        for m in range(0, 2):
+            network_consensus_df = input_df.query(f"index in {list(player_ids[m::2])}")
+            other_player_pre_pd_reputation = list(network_consensus_df[f"other_player_{k}_pre_pd_reputation"])
+            other_player_post_pd_reputation = list(network_consensus_df[f"other_player_{k}_post_pd_reputation"])
+            other_player_final_reputation = list(network_consensus_df[f"other_player_{k}_final_reputation"])
+            network_consensus_df.insert(
+                55, f"other_player_{k}_pre_pd_consensus_group_network", [other_player_pre_pd_reputation] * 8
+            )
+            network_consensus_df.insert(
+                56, f"other_player_{k}_post_pd_consensus_group_network", [other_player_post_pd_reputation] * 8
+            )
+            network_consensus_df.insert(
+                57, f"other_player_{k}_final_consensus_group_network", [other_player_final_reputation] * 8
+            )
+            # other_player_pre_pd_reputation_network_mean = mean_unless_none(other_player_pre_pd_reputation)
+            # other_player_pre_pd_reputation_network_var = var_unless_none(other_player_pre_pd_reputation)
+            # other_player_post_pd_reputation_network_mean = mean_unless_none(other_player_post_pd_reputation)
+            # other_player_post_pd_reputation_network_var = var_unless_none(other_player_post_pd_reputation)
+            # other_player_final_reputation_network_mean = mean_unless_none(other_player_pre_pd_reputation)
+            # other_player_final_reputation_network_var = var_unless_none(other_player_pre_pd_reputation)
+            # network_consensus_df.insert(55, f"other_player_{k}_pre_pd_consensus_group_network_mean", other_player_pre_pd_reputation_network_mean)
+            # network_consensus_df.insert(56, f"other_player_{k}_pre_pd_consensus_group_network_var", other_player_pre_pd_reputation_network_var)
+            # network_consensus_df.insert(57, f"other_player_{k}_post_pd_consensus_group_network_mean", other_player_post_pd_reputation_network_mean,)
+            # network_consensus_df.insert(58, f"other_player_{k}_post_pd_consensus_group_network_var", other_player_post_pd_reputation_network_var)
+            # network_consensus_df.insert(59, f"other_player_{k}_final_consensus_group_network_mean", other_player_final_reputation_network_mean)
+            # network_consensus_df.insert(60, f"other_player_{k}_final_consensus_group_network_var", other_player_final_reputation_network_var)
+            if m == 0:
+                temp_df = network_consensus_df
+            else:
+                result = pd.concat([temp_df, network_consensus_df])
+                input_df = result
+    output_df = input_df.copy()
+    return output_df
+
+
+def get_neighbour_level_consensus(df, player_ids):
+    # np.seterr(all='ignore')
+    for k in range(1, 17):
+        if k == 1:
+            input_df = df
+        for m in player_ids:
+            player_df = input_df.query(f"index == {m}")
+            neighbours = str(input_df.query(f"index == {m}").iloc[0]["player_neighbours"]).split(",")
+            neighbours = [int(x) for x in neighbours]
+            neighbour_consensus_df = input_df.query(f"id in {neighbours}")
+            other_player_pre_pd_reputation = list(neighbour_consensus_df[f"other_player_{k}_pre_pd_reputation"])
+            other_player_post_pd_reputation = list(neighbour_consensus_df[f"other_player_{k}_post_pd_reputation"])
+            other_player_final_reputation = list(neighbour_consensus_df[f"other_player_{k}_final_reputation"])
+            player_df.insert(55, f"other_player_{k}_pre_pd_consensus_group_neighbour", [other_player_pre_pd_reputation])
+            player_df.insert(
+                56, f"other_player_{k}_post_pd_consensus_group_neighbour", [other_player_post_pd_reputation]
+            )
+            player_df.insert(57, f"other_player_{k}_final_consensus_group_neighbour", [other_player_final_reputation])
+            # other_player_pre_pd_reputation_neighbour_mean = mean_unless_none(other_player_pre_pd_reputation)
+            # other_player_pre_pd_reputation_neighbour_var = var_unless_none(other_player_pre_pd_reputation)
+            # other_player_post_pd_reputation_neighbour_mean = mean_unless_none(other_player_post_pd_reputation)
+            # other_player_post_pd_reputation_neighbour_var = var_unless_none(other_player_post_pd_reputation)
+            # other_player_final_reputation_neighbour_mean = mean_unless_none(other_player_pre_pd_reputation)
+            # other_player_final_reputation_neighbour_var = var_unless_none(other_player_pre_pd_reputation)
+            # player_df.insert(55, f"other_player_{k}_pre_pd_consensus_group_neighbour_mean", other_player_pre_pd_reputation_neighbour_mean)
+            # player_df.insert(56, f"other_player_{k}_pre_pd_consensus_group_neighbour_var", other_player_pre_pd_reputation_neighbour_var)
+            # player_df.insert(57, f"other_player_{k}_post_pd_consensus_group_neighbour_mean", other_player_post_pd_reputation_neighbour_mean)
+            # player_df.insert(58, f"other_player_{k}_post_pd_consensus_group_neighbour_var", other_player_post_pd_reputation_neighbour_var)
+            # player_df.insert(59, f"other_player_{k}_final_consensus_group_neighbour_mean", other_player_final_reputation_neighbour_mean)
+            # player_df.insert(60, f"other_player_{k}_final_consensus_group_neighbour_var", other_player_final_reputation_neighbour_var)
+            if m == player_ids[0]:
+                result = player_df
+            else:
+                result = pd.concat([result, player_df])
+        input_df = result
+    output_df = input_df.copy()
     return output_df
 
 
@@ -301,20 +465,21 @@ def filter_dict_by_list(dict_to_filter, list):
     return new_dict
 
 
-def get_opponent_variables(df, round_number, player_id):
+def get_opponent_variables(df, round_number, player_id, lookup_df):
     opponents = str(df["player_opponents"].get(player_id)).split(",")
     pre_pd_reputation_dict = df["pre_pd_reputation_dict"].get(player_id)
     post_pd_reputation_dict = df["post_pd_reputation_dict"].get(player_id)
     final_reputation_dict = df["final_reputation_dict"].get(player_id)
     for i in range(0, len(opponents)):
         opponent_ref = i + 1
+        opponent_unique_id = lookup_df.query(f"id == {opponents[i]}").iloc[0]["unique_id"]
         if round_number == 1:
             opponent_pre_pd_reputation = None
         else:
             opponent_pre_pd_reputation = pre_pd_reputation_dict.get(int(opponents[i]))
         opponent_post_pd_reputation = post_pd_reputation_dict.get(int(opponents[i]))
         opponent_final_reputation = final_reputation_dict.get(int(opponents[i]))
-
+        df.insert(26, f"opponent_{opponent_ref}_unique_id", [opponent_unique_id])
         df.insert(27, f"opponent_{opponent_ref}_pre_pd_reputation", [opponent_pre_pd_reputation])
         df.insert(28, f"opponent_{opponent_ref}_post_pd_reputation", [opponent_post_pd_reputation])
         df.insert(29, f"opponent_{opponent_ref}_final_reputation", [opponent_final_reputation])
@@ -322,12 +487,13 @@ def get_opponent_variables(df, round_number, player_id):
     return output_df
 
 
-def get_neighbour_variables(df, round_number, player_id):
+def get_neighbour_variables(df, round_number, player_id, lookup_df):
     neighbours = str(df["player_neighbours"].get(player_id)).split(",")
     post_pd_reputation_dict = df["post_pd_reputation_dict"].get(player_id)
     shared_reputation_dict = df["shared_reputation_dict"].get(player_id)
     final_reputation_dict = df["final_reputation_dict"].get(player_id)
     if len(neighbours) == 2:
+        df.insert(29, "neighbour_3_unique_id", [None])
         df.insert(30, "neighbour_3_post_pd_reputation", [None])
         df.insert(31, "neighbour_3_final_reputation", [None])
         df.insert(32, "neighbour_3_share_decision", [None])
@@ -340,8 +506,9 @@ def get_neighbour_variables(df, round_number, player_id):
     for i in range(0, len(neighbours)):
         neighbour_ref = i + 1
         if round_number >= 6:
-            neighbour_post_pd_reputation = post_pd_reputation_dict.get(int(neighbours[0]))
-            neighbour_final_reputation = final_reputation_dict.get(int(neighbours[0]))
+            neighbour_unique_id = lookup_df.query(f"id == {neighbours[i]}").iloc[0]["unique_id"]
+            neighbour_post_pd_reputation = post_pd_reputation_dict.get(int(neighbours[i]))
+            neighbour_final_reputation = final_reputation_dict.get(int(neighbours[i]))
             if len(list(shared_reputation_dict[0].get(int(neighbours[i])))) > 0:
                 neighbour_share_decision = "Yes"
             else:
@@ -350,6 +517,7 @@ def get_neighbour_variables(df, round_number, player_id):
             neighbour_share_number = len(list(shared_reputation_dict[0].get(int(neighbours[i]))))
             # neighbour_share_low = sum(j <= 3 for j in list(shared_reputation_dict[0].get(int(neighbours[i])).values()))
             # neighbour_share_high = sum(k >= 8 for k in list(shared_reputation_dict[0].get(int(neighbours[i])).values()))
+            df.insert(29, f"neighbour_{neighbour_ref}_unique_id", [neighbour_unique_id])
             df.insert(30, f"neighbour_{neighbour_ref}_post_pd_reputation", [neighbour_post_pd_reputation])
             df.insert(31, f"neighbour_{neighbour_ref}_final_reputation", [neighbour_final_reputation])
             df.insert(32, f"neighbour_{neighbour_ref}_share_decision", [neighbour_share_decision])
@@ -368,6 +536,7 @@ def get_neighbour_variables(df, round_number, player_id):
                     num_score_proportion = None
                 df.insert(35, f"neighbour_{neighbour_ref}_share_score_{j}", [num_score_proportion])
         else:
+            df.insert(29, f"neighbour_{neighbour_ref}_unique_id", [None])
             df.insert(30, f"neighbour_{neighbour_ref}_post_pd_reputation", [None])
             df.insert(31, f"neighbour_{neighbour_ref}_final_reputation", [None])
             df.insert(32, f"neighbour_{neighbour_ref}_share_decision", [None])
@@ -381,7 +550,7 @@ def get_neighbour_variables(df, round_number, player_id):
     return output_df
 
 
-def get_other_player_reputations(df, round_number, player_id):
+def get_other_player_reputations(df, round_number, player_id, lookup_df):
     known_opponents = df["known_opponents"].get(player_id)
     neighbours = str(df["player_neighbours"].get(player_id)).split(",")
     pre_pd_reputation_dict = df["pre_pd_reputation_dict"].get(player_id)
@@ -389,6 +558,7 @@ def get_other_player_reputations(df, round_number, player_id):
     received_reputation_dict = df["received_reputation_dict"].get(player_id)
     final_reputation_dict = df["final_reputation_dict"].get(player_id)
     for i in range(1, 17):
+        other_player_unique_id = lookup_df.query(f"id == {i}").iloc[0]["unique_id"]
         if type(pre_pd_reputation_dict) is dict:
             pre_pd_reputation = pre_pd_reputation_dict.get(i)
         else:
@@ -431,9 +601,11 @@ def get_other_player_reputations(df, round_number, player_id):
         non_none_gossip_values = list(
             filter(lambda item: item is not None, [neighbour_1_gossip, neighbour_2_gossip, neighbour_3_gossip])
         )
+        non_none_gossip_values = [int(x) for x in non_none_gossip_values]
         if all([neighbour_1_gossip is None, neighbour_2_gossip is None, neighbour_3_gossip is None]):
-            gossip_available = None
+            gossip_available = [None]
             gossip_consensus = None
+            different_gossip_value_available = None
             neighbour_1_pre_gossip_consensus = None
             neighbour_1_post_gossip_consensus = None
             neighbour_2_pre_gossip_consensus = None
@@ -441,8 +613,10 @@ def get_other_player_reputations(df, round_number, player_id):
             neighbour_3_pre_gossip_consensus = None
             neighbour_3_post_gossip_consensus = None
         elif any([neighbour_1_gossip is not None, neighbour_2_gossip is not None, neighbour_3_gossip is not None]):
-            gossip_available = len(non_none_gossip_values)
+            gossip_available = non_none_gossip_values
             gossip_consensus = np.var(non_none_gossip_values)
+            different_gossip_value_available = post_pd_reputation not in non_none_gossip_values
+
             if post_pd_reputation is not None:
                 if neighbour_1_gossip is not None:
                     neighbour_1_pre_gossip_consensus = np.var([post_pd_reputation, neighbour_1_gossip])
@@ -478,7 +652,7 @@ def get_other_player_reputations(df, round_number, player_id):
                 neighbour_1_post_gossip_consensus = None
                 neighbour_2_post_gossip_consensus = None
                 neighbour_3_post_gossip_consensus = None
-
+        df.insert(35, f"other_player_{i}_unique_id", other_player_unique_id)
         df.insert(36, f"other_player_{i}_pre_pd_reputation", pre_pd_reputation)
         df.insert(37, f"other_player_{i}_post_pd_reputation", post_pd_reputation)
         df.insert(38, f"other_player_{i}_neighbour_1_gossip", neighbour_1_gossip)
@@ -494,14 +668,16 @@ def get_other_player_reputations(df, round_number, player_id):
         df.insert(46, f"other_player_{i}_gossip_change_amount", gossip_change_amount)
         defrag_df = df.copy()
         df = defrag_df
-        df.insert(47, f"other_player_{i}_gossip_available", gossip_available)
-        df.insert(48, f"other_player_{i}_gossip_consensus", gossip_consensus)
-        df.insert(49, f"other_player_{i}_neighbour_1_pre_gossip_consensus", neighbour_1_pre_gossip_consensus)
-        df.insert(50, f"other_player_{i}_neighbour_2_pre_gossip_consensus", neighbour_2_pre_gossip_consensus)
-        df.insert(51, f"other_player_{i}_neighbour_3_pre_gossip_consensus", neighbour_3_pre_gossip_consensus)
-        df.insert(52, f"other_player_{i}_neighbour_1_post_gossip_consensus", neighbour_1_post_gossip_consensus)
-        df.insert(53, f"other_player_{i}_neighbour_2_post_gossip_consensus", neighbour_2_post_gossip_consensus)
-        df.insert(54, f"other_player_{i}_neighbour_3_post_gossip_consensus", neighbour_3_post_gossip_consensus)
+        df.insert(47, f"other_player_{i}_gossip_available", len(gossip_available))
+        df.insert(48, f"other_player_{i}_gossip_available_values", [gossip_available])
+        df.insert(49, f"other_player_{i}_gossip_available_different_values", different_gossip_value_available)
+        df.insert(50, f"other_player_{i}_gossip_consensus", gossip_consensus)
+        df.insert(51, f"other_player_{i}_neighbour_1_pre_gossip_consensus", neighbour_1_pre_gossip_consensus)
+        df.insert(52, f"other_player_{i}_neighbour_2_pre_gossip_consensus", neighbour_2_pre_gossip_consensus)
+        df.insert(53, f"other_player_{i}_neighbour_3_pre_gossip_consensus", neighbour_3_pre_gossip_consensus)
+        df.insert(54, f"other_player_{i}_neighbour_1_post_gossip_consensus", neighbour_1_post_gossip_consensus)
+        df.insert(55, f"other_player_{i}_neighbour_2_post_gossip_consensus", neighbour_2_post_gossip_consensus)
+        df.insert(56, f"other_player_{i}_neighbour_3_post_gossip_consensus", neighbour_3_post_gossip_consensus)
 
     output_df = df.copy()
     return output_df

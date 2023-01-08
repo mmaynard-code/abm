@@ -12,10 +12,9 @@ if __name__ == "__main__":
         "total_networks": {2},
         "treatment_ref": {"C"},
         "game_type": {"gossip"},
-        "gossip_logic": {"complex"},
     }
-    n_iterations = 2
-    n_steps = 1000
+    n_iterations = 1
+    n_steps = 10
     # combinations = 0
     # for i in parameter_config:
     #     if combinations == 0:
@@ -39,7 +38,7 @@ if __name__ == "__main__":
     print("Creating pandas DataFrame.")
 
     results_df = pd.DataFrame(results)
-
+    print(results_df.columns)
     print("Writing results to csv file.")
 
     results_df.to_csv("results.csv")

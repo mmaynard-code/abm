@@ -15,10 +15,15 @@ def list_network_neighbours(model):
     return agent_neighbours
 
 
+def session_consensus(model):
+    agent_network_ids = [agent.agent_id for agent in model.schedule.agents]
+    return agent_network_ids
+
+
 random_model_reporters = {
     "Networks": list_network_id,
-    #   "Agent_ID": list_agent_id,
-    #   "Neighbours": list_network_neighbours,
+    "Agent_ID": list_agent_id,
+    "Neighbours": list_network_neighbours,
 }
 
 
