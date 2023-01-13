@@ -8,14 +8,14 @@ from model import SimpleModel
 if __name__ == "__main__":
     freeze_support()
     parameter_config = {
-        "network_groups": {2},
+        "network_groups": {1},
         "total_networks": {2},
         "treatment_ref": {"C"},
         "game_type": {"gossip"},
         "consensus_type": {"grouped"},
     }
-    n_iterations = 3
-    n_steps = 100
+    n_iterations = 1
+    n_steps = 1000
     # combinations = 0
     # for i in parameter_config:
     #     if combinations == 0:

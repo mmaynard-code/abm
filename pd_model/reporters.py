@@ -1,15 +1,71 @@
 import numpy as np
 from mapping import list_unless_none
+from mapping import pd_payoff_matrix
 
 
 def get_consensus_variance(model):
-    agent_session_consensus = [agent.session_consensus for agent in model.schedule.agents]
-    agents_in_network_1 = round(np.nanmean(list_unless_none(agent_session_consensus)), 3)
-    return agents_in_network_1
+    agent_consensus = [abs(agent.session_consensus - agent.neighbour_consensus) for agent in model.schedule.agents]
+    all_agent_consensus = round(np.nanmean(list_unless_none(agent_consensus)), 3)
+    return all_agent_consensus
+
+
+def get_round_cooperation(model):
+    all_agent_decision = [agent.result_1 for agent in model.schedule.agents] + [
+        agent.result_2 for agent in model.schedule.agents
+    ]
+    all_agent_cooperation = [decision for decision in all_agent_decision if decision == "Cooperation"]
+    round_cooperation = round(len(all_agent_cooperation) / len(all_agent_decision), 3)
+    return round_cooperation
+
+
+def get_round_gossip(model):
+    round_gossip = sum(
+        [
+            sum(
+                [
+                    len(agent.gossip_dictionary_1.keys()),
+                    len(agent.gossip_dictionary_2.keys()),
+                    len(agent.gossip_dictionary_3.keys()),
+                ]
+            )
+            for agent in model.schedule.agents
+        ]
+    )
+    print(round_gossip)
+    print(model.num_agents)
+    round_gossip = round(round_gossip / model.num_agents, 3)
+    return round_gossip
+
+
+def get_round_effective_gossip(model):
+    round_effective_gossip = sum([len(agent.update_dictionary.keys()) for agent in model.schedule.agents])
+    round_effective_gossip = round(round_effective_gossip / model.num_agents, 3)
+    return round_effective_gossip
+
+
+def get_session_cooperation_level(model):
+    agent_total_payoff = [agent.payoff_total for agent in model.schedule.agents]
+    session_maximum_total_payoff = (model.num_agents * pd_payoff_matrix.get("Cooperate").get("Cooperate") * 2) * (
+        model.schedule.steps + 1
+    )
+    session_cooperation_level = round(sum(agent_total_payoff) / session_maximum_total_payoff, 3)
+    return session_cooperation_level
+
+
+def get_round_cooperation_level(model):
+    agent_round_payoff = [sum([agent.payoff_1, agent.payoff_2]) for agent in model.schedule.agents]
+    round_maximum_total_payoff = model.num_agents * pd_payoff_matrix.get("Cooperate").get("Cooperate") * 2
+    round_cooperation_level = round(sum(agent_round_payoff) / round_maximum_total_payoff, 3)
+    return round_cooperation_level
 
 
 random_model_reporters = {
     "Consensus": get_consensus_variance,
+    "Cooperation": get_round_cooperation,
+    "Cooperation_Round": get_round_cooperation_level,
+    "Cooperation_Session": get_session_cooperation_level,
+    "Gossip": get_round_gossip,
+    "Updates": get_round_effective_gossip,
 }
 
 
