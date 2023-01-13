@@ -1,29 +1,15 @@
-def list_network_id(model):
-    agent_network_ids = [agent.network_id for agent in model.schedule.agents]
-    agents_in_network_1 = len([x for x in agent_network_ids if x == 1])
+import numpy as np
+from mapping import list_unless_none
+
+
+def get_consensus_variance(model):
+    agent_session_consensus = [agent.session_consensus for agent in model.schedule.agents]
+    agents_in_network_1 = round(np.nanmean(list_unless_none(agent_session_consensus)), 3)
     return agents_in_network_1
 
 
-def list_agent_id(model):
-    agent_network_ids = [agent.agent_id for agent in model.schedule.agents]
-    # agents_in_network_1 = len([x for x in agent_network_ids if x == 1])
-    return agent_network_ids
-
-
-def list_network_neighbours(model):
-    agent_neighbours = [agent.neighbours_list for agent in model.schedule.agents]
-    return agent_neighbours
-
-
-def session_consensus(model):
-    agent_network_ids = [agent.agent_id for agent in model.schedule.agents]
-    return agent_network_ids
-
-
 random_model_reporters = {
-    "Networks": list_network_id,
-    "Agent_ID": list_agent_id,
-    "Neighbours": list_network_neighbours,
+    "Consensus": get_consensus_variance,
 }
 
 
@@ -57,21 +43,30 @@ def get_agent_reporters_by_game_type(model):
     agent_reporters = random_agent_reporters
     if model.game_type != "random":
         for i in range(0, model.num_agents):
-            new_reporter = {"agent_" + str(i) + "_reputation": "agent_" + str(i) + "_reputation"}
+            new_reporter = {
+                "agent_" + str(i) + "_reputation": "agent_" + str(i) + "_reputation",
+                "agent_" + str(i) + "_post_pd_reputation": "agent_" + str(i) + "_post_pd_reputation",
+                "agent_" + str(i) + "_final_reputation": "agent_" + str(i) + "_final_reputation",
+            }
             agent_reporters = {**agent_reporters, **new_reporter}
     if model.game_type == "gossip":
         for i in range(0, model.num_agents):
-            new_reporter = {"agent_" + str(i) + "_reputation_gossip": "agent_" + str(i) + "_reputation_gossip"}
+            new_reporter = {
+                "agent_" + str(i) + "_neighbour_consensus": "agent_" + str(i) + "_neighbour_consensus",
+                "agent_" + str(i) + "_network_consensus": "agent_" + str(i) + "_network_consensus",
+                "agent_" + str(i) + "_session_consensus": "agent_" + str(i) + "_session_consensus",
+            }
             agent_reporters = {**agent_reporters, **new_reporter}
         for i in range(1, len(model.schedule.agents[0].neighbours_list) + 1):
             new_reporter = {
-                "neighbour_" + str(i): "neighbour_" + str(i),
-                "neighbour_" + str(i) + "_AgentID": "neighbour_" + str(i) + "_AgentID",
-                "neighbour_" + str(i) + "_reputation": "neighbour_" + str(i) + "_reputation",
-                "gossip_decision_neighbour_" + str(i): "gossip_decision_neighbour_" + str(i),
                 "gossip_dictionary_" + str(i): "gossip_dictionary_" + str(i),
-                "update_decision_" + str(i): "update_decision_" + str(i),
             }
             agent_reporters = {**agent_reporters, **new_reporter}
-        agent_reporters = {**agent_reporters, **{"update_dictionary": "update_dictionary"}}
+        new_reporters = {
+            "update_dictionary": "update_dictionary",
+            "session_consensus": "session_consensus",
+            "network_consensus": "network_consensus",
+            "neighbour_consensus": "neighbour_consensus",
+        }
+        agent_reporters = {**agent_reporters, **new_reporters}
     return agent_reporters

@@ -12,9 +12,10 @@ if __name__ == "__main__":
         "total_networks": {2},
         "treatment_ref": {"C"},
         "game_type": {"gossip"},
+        "consensus_type": {"grouped"},
     }
-    n_iterations = 1
-    n_steps = 10
+    n_iterations = 3
+    n_steps = 100
     # combinations = 0
     # for i in parameter_config:
     #     if combinations == 0:
