@@ -9,6 +9,7 @@ stage_lists_by_game_type = {
         "step_gossip",
         "step_reflect",
         "step_update",
+        "step_consensus",
         "step_collect",
     ],
 }
@@ -89,3 +90,4 @@ def refactor_reputation_scores(reputation_score_value):
         reputation_score_value = -1
     else:
         reputation_score_value = 0
+    return reputation_score_value

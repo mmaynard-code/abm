@@ -122,6 +122,10 @@ def assign_agent_reputation_attributes(agent):
     else:
         for i in range(0, agent.model.num_agents):
             setattr(agent, "agent_" + str(i) + "_reputation", None)
+            setattr(agent, "agent_" + str(i) + "_post_pd_reputation", None)
+            setattr(agent, "agent_" + str(i) + "_final_reputation", None)
+            setattr(agent, "agent_" + str(i) + "_post_pd_reputation_grouped", None)
+            setattr(agent, "agent_" + str(i) + "_final_reputation_grouped", None)
     # elif agent.model.game_type == "reputation":
     #     for i in range(0, agent.model.num_agents):
     #         setattr(agent, "agent_" + str(i) + "_reputation", None)
