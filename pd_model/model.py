@@ -71,15 +71,42 @@ class SimpleAgent(mesa.Agent):
         the pd_result_matrix.
         """
         self.result_1 = pd_result_matrix[self.pd_decision_1][self.pd_opponent_1.pd_decision_1]
-        self.result_2 = pd_result_matrix[self.pd_decision_2][self.pd_opponent_1.pd_decision_2]
-        self.pd_opponent_2_pd_decision_2 = self.pd_opponent_1.pd_decision_2
+        self.result_2 = pd_result_matrix[self.pd_decision_2][self.pd_opponent_2.pd_decision_2]
         self.payoff_1 = pd_payoff_matrix[self.pd_decision_1][self.pd_opponent_1.pd_decision_1]
-        self.payoff_2 = pd_payoff_matrix[self.pd_decision_2][self.pd_opponent_1.pd_decision_2]
+        self.payoff_2 = pd_payoff_matrix[self.pd_decision_2][self.pd_opponent_2.pd_decision_2]
         self.payoff_total += self.payoff_1 + self.payoff_2
         if self.model.schedule.steps > 0:
             self.payoff_mean = (self.payoff_total / 2) / self.model.schedule.steps
         else:
             self.payoff_mean = self.payoff_total / 2
+
+    def set_cooperation_values(self):
+
+        current_rounds_played = getattr(self, "agent_" + str(self.pd_opponent_1_AgentID) + "_played") + 1
+        setattr(self, "agent_" + str(self.pd_opponent_1_AgentID) + "_played", current_rounds_played)
+        current_cooperation_count = getattr(self, "agent_" + str(self.pd_opponent_1_AgentID) + "_cooperated")
+
+        if self.result_1 == pd_result_matrix["Cooperate"]["Cooperate"]:
+            current_cooperation_count += 1
+            setattr(self, "agent_" + str(self.pd_opponent_1_AgentID) + "_cooperated", current_cooperation_count)
+
+        current_cooperation_proportion = current_cooperation_count / current_rounds_played
+        setattr(
+            self, "agent_" + str(self.pd_opponent_1_AgentID) + "_cooperated_proportion", current_cooperation_proportion
+        )
+
+        current_rounds_played = getattr(self, "agent_" + str(self.pd_opponent_2_AgentID) + "_played") + 1
+        setattr(self, "agent_" + str(self.pd_opponent_2_AgentID) + "_played", current_rounds_played + 1)
+        current_cooperation_count = getattr(self, "agent_" + str(self.pd_opponent_2_AgentID) + "_cooperated")
+
+        if self.result_2 == pd_result_matrix["Cooperate"]["Cooperate"]:
+            current_cooperation_count += 1
+            setattr(self, "agent_" + str(self.pd_opponent_2_AgentID) + "_cooperated", current_cooperation_count)
+
+        current_cooperation_proportion = current_cooperation_count / current_rounds_played
+        setattr(
+            self, "agent_" + str(self.pd_opponent_1_AgentID) + "_cooperated_proportion", current_cooperation_proportion
+        )
 
     def set_pd_scoring(self):
         """
@@ -105,6 +132,8 @@ class SimpleAgent(mesa.Agent):
         The gossip_dictionary contains the reputation scores that the agent is choosing to share with
         each neighbour.
         """
+        if len(self.neighbours_list) == 2:
+            setattr(self, "gossip_dictionary_3", {})
         for i in range(1, len(self.neighbours_list) + 1):
             gossip_dictionary = {}
             neighbour_reputation = getattr(self, "neighbour_" + str(i) + "_reputation")
@@ -225,31 +254,53 @@ class SimpleAgent(mesa.Agent):
         all_session_consensus = []
         all_network_consensus = []
         all_neighbour_consensus = []
+        all_session_cooperation = []
+        all_network_cooperation = []
+        all_neighbour_cooperation = []
         for i in range(0, self.model.num_agents):
             session_reputation = []
             network_reputation = []
             neighbour_reputation = []
+            session_cooperation = []
+            network_cooperation = []
+            neighbour_cooperation = []
             for j in session_agents:
                 current_agent_consensus = getattr(j, "agent_" + str(i) + "_reputation")
+                current_agent_cooperation = getattr(j, "agent_" + str(i) + "_cooperated_proportion")
                 if self.model.consensus_type == "grouped":
                     current_agent_consensus = refactor_reputation_scores(current_agent_consensus)
                 session_reputation += [current_agent_consensus]
+                session_cooperation += [current_agent_cooperation]
                 if j in network_agents:
                     network_reputation += [current_agent_consensus]
+                    network_cooperation += [current_agent_cooperation]
                 if j in neighbour_agents:
                     neighbour_reputation += [current_agent_consensus]
+                    neighbour_cooperation += [current_agent_cooperation]
             agent_session_consensus = round(np.nanvar(list_unless_none(session_reputation)), 3)
             agent_network_consensus = round(np.nanvar(list_unless_none(network_reputation)), 3)
             agent_neighbour_consensus = round(np.nanvar(list_unless_none(neighbour_reputation)), 3)
+            agent_session_cooperation = round(np.mean(session_cooperation), 3)
+            agent_network_cooperation = round(np.mean(network_cooperation), 3)
+            agent_neighbour_cooperation = round(np.mean(neighbour_cooperation), 3)
             all_session_consensus += [agent_session_consensus]
             all_network_consensus += [agent_network_consensus]
             all_neighbour_consensus += [agent_neighbour_consensus]
+            all_session_cooperation += [agent_session_cooperation]
+            all_network_cooperation += [agent_network_cooperation]
+            all_neighbour_cooperation += [agent_neighbour_cooperation]
             setattr(self, "agent_" + str(i) + "_session_consensus", agent_session_consensus)
             setattr(self, "agent_" + str(i) + "_network_consensus", agent_network_consensus)
             setattr(self, "agent_" + str(i) + "_neighbour_consensus", agent_neighbour_consensus)
         session_consensus = round(np.nanmean(list_unless_none(all_session_consensus)), 3)
         network_consensus = round(np.nanmean(list_unless_none(all_network_consensus)), 3)
         neighbour_consensus = round(np.nanmean(list_unless_none(all_neighbour_consensus)), 3)
+        session_cooperation = round(np.mean(all_session_cooperation), 3)
+        network_cooperation = round(np.mean(all_network_cooperation), 3)
+        neighbour_cooperation = round(np.mean(all_neighbour_cooperation), 3)
+        setattr(self, "session_cooperation", session_cooperation)
+        setattr(self, "network_cooperation", network_cooperation)
+        setattr(self, "neighbour_cooperation", neighbour_cooperation)
         setattr(self, "session_consensus", session_consensus)
         setattr(self, "network_consensus", network_consensus)
         setattr(self, "neighbour_consensus", neighbour_consensus)
@@ -266,6 +317,7 @@ class SimpleAgent(mesa.Agent):
 
     def step_scoring(self):
         self.set_pd_scoring()
+        self.set_cooperation_values()
 
     def step_gossip(self):
         self.set_gossip_dictionary()

@@ -1,5 +1,5 @@
 stage_lists_by_game_type = {
-    "random": ["step_pd", "step_payoffs", "step_collect"],
+    "random": ["step_start", "step_pd", "step_payoffs", "step_scoring", "step_consensus", "step_collect"],
     "reputation": ["step_start", "step_pd", "step_payoffs", "step_scoring", "step_collect"],
     "gossip": [
         "step_start",

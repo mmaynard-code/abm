@@ -31,8 +31,6 @@ def get_round_gossip(model):
             for agent in model.schedule.agents
         ]
     )
-    print(round_gossip)
-    print(model.num_agents)
     round_gossip = round(round_gossip / model.num_agents, 3)
     return round_gossip
 
@@ -64,6 +62,9 @@ random_model_reporters = {
     "Cooperation": get_round_cooperation,
     "Cooperation_Round": get_round_cooperation_level,
     "Cooperation_Session": get_session_cooperation_level,
+}
+
+gossip_model_reporters = {
     "Gossip": get_round_gossip,
     "Updates": get_round_effective_gossip,
 }
@@ -72,7 +73,7 @@ random_model_reporters = {
 model_reporters_by_game_type = {
     "random": random_model_reporters,
     "reputation": random_model_reporters,
-    "gossip": random_model_reporters,
+    "gossip": {**random_model_reporters, **gossip_model_reporters},
 }
 
 
@@ -101,6 +102,7 @@ def get_agent_reporters_by_game_type(model):
         for i in range(0, model.num_agents):
             new_reporter = {
                 "agent_" + str(i) + "_reputation": "agent_" + str(i) + "_reputation",
+                "agent_" + str(i) + "_cooperated_proportion": "agent_" + str(i) + "_cooperated_proportion",
                 "agent_" + str(i) + "_post_pd_reputation": "agent_" + str(i) + "_post_pd_reputation",
                 "agent_" + str(i) + "_final_reputation": "agent_" + str(i) + "_final_reputation",
             }
@@ -123,6 +125,9 @@ def get_agent_reporters_by_game_type(model):
             "session_consensus": "session_consensus",
             "network_consensus": "network_consensus",
             "neighbour_consensus": "neighbour_consensus",
+            "session_cooperation": "session_cooperation",
+            "network_cooperation": "network_cooperation",
+            "neighbour_cooperation": "neighbour_cooperation",
         }
         agent_reporters = {**agent_reporters, **new_reporters}
     return agent_reporters

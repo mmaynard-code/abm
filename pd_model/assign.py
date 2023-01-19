@@ -41,7 +41,8 @@ def assign_neighbour_values(agent):
             )
             setattr(agent, neighbour_column_list[1], getattr(agent, neighbour_column_list[0]).unique_id)
         reputation_column = "agent_" + str(getattr(agent, neighbour_column_list[0]).unique_id) + "_reputation"
-        setattr(agent, neighbour_column_list[2], getattr(agent, reputation_column))
+        if len(neighbour_column_list) == 3:
+            setattr(agent, neighbour_column_list[2], getattr(agent, reputation_column))
         current_neighbour += 1
 
 
@@ -117,20 +118,12 @@ def assign_agent_reputation_attributes(agent):
     Sets all required reputation attributes for each agent
     This is run once during agent creation
     """
-    if agent.model.game_type == "random":
-        pass
-    else:
-        for i in range(0, agent.model.num_agents):
-            setattr(agent, "agent_" + str(i) + "_reputation", None)
-            setattr(agent, "agent_" + str(i) + "_post_pd_reputation", None)
-            setattr(agent, "agent_" + str(i) + "_final_reputation", None)
-            setattr(agent, "agent_" + str(i) + "_post_pd_reputation_grouped", None)
-            setattr(agent, "agent_" + str(i) + "_final_reputation_grouped", None)
-    # elif agent.model.game_type == "reputation":
-    #     for i in range(0, agent.model.num_agents):
-    #         setattr(agent, "agent_" + str(i) + "_reputation", None)
-    # elif agent.model.game_type == "gossip":
-    #     for i in range(0, agent.model.num_agents):
-    #         setattr(agent, "agent_" + str(i) + "_reputation", None)
-    #         for j in agent.neighbours:
-    #             setattr(agent, "agent_" + str(j) + "_gossip_" + str(i), None)
+    for i in range(0, agent.model.num_agents):
+        setattr(agent, "agent_" + str(i) + "_reputation", None)
+        setattr(agent, "agent_" + str(i) + "_played", 0)
+        setattr(agent, "agent_" + str(i) + "_cooperated", 0)
+        setattr(agent, "agent_" + str(i) + "_cooperated_proportion", 0)
+        setattr(agent, "agent_" + str(i) + "_post_pd_reputation", None)
+        setattr(agent, "agent_" + str(i) + "_final_reputation", None)
+        setattr(agent, "agent_" + str(i) + "_post_pd_reputation_grouped", None)
+        setattr(agent, "agent_" + str(i) + "_final_reputation_grouped", None)
