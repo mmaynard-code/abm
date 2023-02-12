@@ -347,7 +347,7 @@ def var_unless_none(value_list):
         return None
 
 
-def list_unless_none(value_list):
+def list_unless_value(value_list):
     if len(value_list) > 0:
         return list(filter(lambda item: item is not None, value_list))
     else:

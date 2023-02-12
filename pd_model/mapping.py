@@ -1,6 +1,6 @@
 stage_lists_by_game_type = {
     "random": ["step_start", "step_pd", "step_payoffs", "step_scoring", "step_consensus", "step_collect"],
-    "reputation": ["step_start", "step_pd", "step_payoffs", "step_scoring", "step_collect"],
+    "reputation": ["step_start", "step_pd", "step_payoffs", "step_scoring", "step_consensus", "step_collect"],
     "gossip": [
         "step_start",
         "step_pd",
@@ -74,9 +74,9 @@ def get_neighbour_maps_by_treatment_ref(agent_id, network_agents, treatment_ref)
     return filtered_neighbour_list
 
 
-def list_unless_none(value_list):
-    if len(value_list) > 0:
-        return list(filter(lambda item: item is not None, value_list))
+def list_unless_value(list_of_values, value=None):
+    if len(list_of_values) > 0:
+        return list(filter(lambda item: item is not value, list_of_values))
     else:
         return list(None)
 

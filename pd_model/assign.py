@@ -1,6 +1,8 @@
 import random
 
+import numpy as np
 from mapping import get_neighbour_maps_by_treatment_ref
+from mapping import list_unless_value
 
 
 def assign_network_id(model, network_agents, treatment_ref):
@@ -9,11 +11,13 @@ def assign_network_id(model, network_agents, treatment_ref):
     get_neighbour_maps_by_treatment_ref logical mapping
     This is only run once at the start of the model
     """
+    current_index = 0
     current_network = 1
     while current_network <= model.total_networks:
         current_agent = 1
         for a in model.schedule.agents:
             if a.unique_id < (network_agents * current_network) and a.network_id is None:
+                a.index_id = current_index
                 a.network_id = current_network
                 a.agent_id = current_agent
                 agent_neighbour_list = get_neighbour_maps_by_treatment_ref(
@@ -21,6 +25,7 @@ def assign_network_id(model, network_agents, treatment_ref):
                 )
                 a.neighbours_list = agent_neighbour_list
                 current_agent += 1
+                current_index += 1
         current_agent = 1
         current_network += 1
 
@@ -100,10 +105,12 @@ def assign_agent_base_attributes(agent):
     agent.pd_opponent_1 = None
     agent.pd_opponent_1_AgentID = None
     agent.pd_opponent_1_pd_decision_1 = None
+    agent.pd_opponent_1_reputation = None
     agent.pd_decision_1 = None
     agent.pd_opponent_2 = None
     agent.pd_opponent_2_AgentID = None
     agent.pd_opponent_2_pd_decision_2 = None
+    agent.pd_opponent_2_reputation = None
     agent.pd_decision_2 = None
     agent.payoff_1 = None
     agent.payoff_2 = None
@@ -122,8 +129,67 @@ def assign_agent_reputation_attributes(agent):
         setattr(agent, "agent_" + str(i) + "_reputation", None)
         setattr(agent, "agent_" + str(i) + "_played", 0)
         setattr(agent, "agent_" + str(i) + "_cooperated", 0)
-        setattr(agent, "agent_" + str(i) + "_cooperated_proportion", 0)
+        setattr(agent, "agent_" + str(i) + "_cooperated_proportion", None)
         setattr(agent, "agent_" + str(i) + "_post_pd_reputation", None)
         setattr(agent, "agent_" + str(i) + "_final_reputation", None)
         setattr(agent, "agent_" + str(i) + "_post_pd_reputation_grouped", None)
         setattr(agent, "agent_" + str(i) + "_final_reputation_grouped", None)
+    for i in range(0, 11):
+        setattr(agent, "count_" + str(i), 0)
+
+
+def assign_aggregate_reporters(agent, variable, transformation, output_name, length: bool = False):
+    session_agents = [a for a in agent.model.schedule.agents]
+    network_agents = [a for a in session_agents if a.network_id == agent.network_id]
+    neighbours = [a for a in network_agents if a.agent_id in agent.neighbours_list]
+    neighbour_group_agents = [*neighbours, agent]
+    all_session = []
+    all_network = []
+    all_neighbour = []
+    for i in range(0, agent.model.num_agents):
+        raw_session = []
+        raw_network = []
+        raw_neighbour = []
+        for j in session_agents:
+            if "agent" in variable:
+                variable_suffix = variable.split("_")[1]
+                variable_value = getattr(j, "agent_" + str(i) + f"_{variable_suffix}")
+            else:
+                variable_value = getattr(j, variable)
+            if length:
+                variable_value = len(variable_value)
+            raw_session += [variable_value]
+            if j in network_agents:
+                raw_network += [variable_value]
+            if j in neighbour_group_agents:
+                raw_neighbour += [variable_value]
+        if transformation == "mean":
+            transformed_session = round(np.nanmean(list_unless_value(raw_session)), 3)
+            transformed_network = round(np.nanmean(list_unless_value(raw_network)), 3)
+            transformed_neighbour = round(np.nanmean(list_unless_value(raw_neighbour)), 3)
+        elif transformation == "var":
+            transformed_session = round(np.nanvar(list_unless_value(raw_session)), 3)
+            transformed_network = round(np.nanvar(list_unless_value(raw_network)), 3)
+            transformed_neighbour = round(np.nanvar(list_unless_value(raw_neighbour)), 3)
+        elif transformation == "sum":
+            transformed_session = np.nansum(list_unless_value(raw_session))
+            transformed_network = np.nansum(list_unless_value(raw_network))
+            transformed_neighbour = np.nansum(list_unless_value(raw_neighbour))
+        all_session += [transformed_session]
+        all_network += [transformed_network]
+        all_neighbour += [transformed_neighbour]
+    if transformation == "mean":
+        transformed_all_session = round(np.nanmean(list_unless_value(all_session)), 3)
+        transformed_all_network = round(np.nanmean(list_unless_value(all_network)), 3)
+        transformed_all_neighbour = round(np.nanmean(list_unless_value(all_neighbour)), 3)
+    elif transformation == "var":
+        transformed_all_session = round(np.nanvar(list_unless_value(all_session)), 3)
+        transformed_all_network = round(np.nanvar(list_unless_value(all_network)), 3)
+        transformed_all_neighbour = round(np.nanvar(list_unless_value(all_neighbour)), 3)
+    elif transformation == "sum":
+        transformed_all_session = np.nansum(list_unless_value(all_session))
+        transformed_all_network = np.nansum(list_unless_value(all_network))
+        transformed_all_neighbour = np.nansum(list_unless_value(all_neighbour))
+    setattr(agent, f"session_{output_name}", transformed_all_session)
+    setattr(agent, f"network_{output_name}", transformed_all_network)
+    setattr(agent, f"neighbour_{output_name}", transformed_all_neighbour)

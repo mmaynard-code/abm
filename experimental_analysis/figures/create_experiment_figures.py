@@ -85,8 +85,8 @@ share_decision_fig.update_xaxes(type="category")
 share_decision_fig.show()
 share_decision_fig.write_html("experimental_analysis/figures/share_decision_fig.html")
 
-update_decision_data = pd.read_csv("update_decision_data_filtered.csv")
-update_decision_neighbour_reputation_fig = px.histogram(
+update_decision_data = pd.read_csv("update_decision_data_filtered_simple_gossip.csv")
+update_decision_gossip_sender_reputation_fig = px.histogram(
     update_decision_data,
     x="neighbour_post_pd_reputation",
     range_y=[0, 2000],
@@ -99,22 +99,21 @@ update_decision_neighbour_reputation_fig = px.histogram(
         gossip_change_flag=[True, False],
         treatment_ref=["A", "B", "C"],
         neighbour_post_pd_reputation=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-        neighbour_gossip=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
     ),
     labels={
         "gossip_change_flag": "Update Decision",
-        "neighbour_post_pd_reputation": "Neighbour Reputation",
+        "neighbour_post_pd_reputation": "Gossip Sender Reputation",
         "treatment_ref": "Network Type",
     },
-    title="Player Update Decision by Neighbour Reputation",
+    title="Player Update Decision by Gossip Sender Reputation",
 )
-update_decision_neighbour_reputation_fig.update_xaxes(type="category")
-update_decision_neighbour_reputation_fig.show()
-update_decision_neighbour_reputation_fig.write_html(
-    "experimental_analysis/figures/update_decision_neighbour_reputation_fig.html"
+update_decision_gossip_sender_reputation_fig.update_xaxes(type="category")
+update_decision_gossip_sender_reputation_fig.show()
+update_decision_gossip_sender_reputation_fig.write_html(
+    "experimental_analysis/figures/update_decision_gossip_sender_reputation_fig.html"
 )
 
-update_decision_neighbour_gossip_fig = px.histogram(
+update_decision_gossip_target_reputation_fig = px.histogram(
     update_decision_data,
     x="neighbour_gossip",
     range_y=[0, 2000],
@@ -126,18 +125,44 @@ update_decision_neighbour_gossip_fig = px.histogram(
     category_orders=dict(
         gossip_change_flag=[True, False],
         treatment_ref=["A", "B", "C"],
-        neighbour_post_pd_reputation=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
         neighbour_gossip=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
     ),
     labels={
         "gossip_change_flag": "Update Decision",
-        "neighbour_gossip": "Neighbour Gossip Score",
+        "neighbour_gossip": "Gossip Target Reputation",
         "treatment_ref": "Network Type",
     },
-    title="Player Update Decision by Neighbour Gossip Score Received",
+    title="Player Update Decision by Gossip Target Reputation",
 )
-update_decision_neighbour_gossip_fig.update_xaxes(type="category")
-update_decision_neighbour_gossip_fig.show()
-update_decision_neighbour_gossip_fig.write_html(
-    "experimental_analysis/figures/update_decision_neighbour_gossip_fig.html"
+update_decision_gossip_target_reputation_fig.update_xaxes(type="category")
+update_decision_gossip_target_reputation_fig.show()
+update_decision_gossip_target_reputation_fig.write_html(
+    "experimental_analysis/figures/update_decision_gossip_target_reputation_fig.html"
+)
+
+update_decision_gossip_subject_reputation_fig = px.histogram(
+    update_decision_data,
+    x="post_pd_reputation",
+    range_y=[0, 2000],
+    color="gossip_change_flag",
+    # barnorm="percent",
+    facet_col="treatment_ref",
+    marginal="box",
+    color_discrete_sequence=px.colors.qualitative.Set3,
+    category_orders=dict(
+        gossip_change_flag=[True, False],
+        treatment_ref=["A", "B", "C"],
+        post_pd_reputation=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+    ),
+    labels={
+        "gossip_change_flag": "Update Decision",
+        "post_pd_reputation": "Gossip Subject Reputation",
+        "treatment_ref": "Network Type",
+    },
+    title="Player Update Decision by Gossip Subject Reputation",
+)
+update_decision_gossip_subject_reputation_fig.update_xaxes(type="category")
+update_decision_gossip_subject_reputation_fig.show()
+update_decision_gossip_subject_reputation_fig.write_html(
+    "experimental_analysis/figures/update_decision_gossip_subject_reputation_fig.html"
 )

@@ -6,17 +6,19 @@ import mesa
 import pandas as pd
 from model import SimpleModel
 
+if "aggregate" in "baseline, pd_game, aggregate":
+    pass
+
 if __name__ == "__main__":
     freeze_support()
     all_parameter_config = {
-        "network_groups": {2, 3, 4, 8},
-        "total_networks": {2, 3, 4},
-        "treatment_ref": {"A", "B", "C"},
-        "game_type": {"random", "gossip"},
-        "consensus_type": {"grouped"},
+        "network_groups": {2},
+        "total_networks": {2},
+        "treatment_ref": {"C"},
+        "game_type": {"gossip"},
     }
     n_iterations = 10
-    n_steps = 100
+    n_steps = 1000
 
     # noqa
     combinations = n_iterations
@@ -41,6 +43,7 @@ if __name__ == "__main__":
                         "treatment_ref": {treatment_ref},
                         "game_type": {game_type},
                         "consensus_type": {"grouped"},
+                        "reporter_config": {"baseline, pd_game, aggregate"},
                     }
                     print(parameter_config)
                     parameter_filename = f"result_{network_groups}_{total_networks}_{treatment_ref}_{game_type}"
@@ -59,6 +62,6 @@ if __name__ == "__main__":
                     print(results_df.columns)
                     print("Writing results to csv file.")
 
-                    results_df.to_csv(f"{parameter_filename}.csv")
+                    # results_df.to_csv(f"{parameter_filename}.csv")
 
                     print("Completed.")
