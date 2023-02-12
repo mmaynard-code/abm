@@ -1,6 +1,6 @@
 stage_lists_by_game_type = {
-    "random": ["step_start", "step_pd", "step_payoffs", "step_scoring", "step_consensus", "step_collect"],
-    "reputation": ["step_start", "step_pd", "step_payoffs", "step_scoring", "step_consensus", "step_collect"],
+    "random": ["step_start", "step_pd", "step_payoffs", "step_scoring", "step_end", "step_collect"],
+    "reputation": ["step_start", "step_pd", "step_payoffs", "step_scoring", "step_end", "step_collect"],
     "gossip": [
         "step_start",
         "step_pd",
@@ -9,7 +9,7 @@ stage_lists_by_game_type = {
         "step_gossip",
         "step_reflect",
         "step_update",
-        "step_consensus",
+        "step_end",
         "step_collect",
     ],
 }
@@ -74,14 +74,20 @@ def get_neighbour_maps_by_treatment_ref(agent_id, network_agents, treatment_ref)
     return filtered_neighbour_list
 
 
-def list_unless_value(list_of_values, value=None):
+def list_unless_value(list_of_values: list[str], value: str = None):
+    """
+    Filters an input list to remove values, default value is None
+    """
     if len(list_of_values) > 0:
         return list(filter(lambda item: item is not value, list_of_values))
     else:
-        return list(None)
+        return list_of_values
 
 
 def refactor_reputation_scores(reputation_score_value):
+    """
+    Refactors input reputation scores using the same grouping used to create the update_decision_distribution
+    """
     if reputation_score_value is None:
         reputation_score_value = 0
     elif reputation_score_value >= 7:

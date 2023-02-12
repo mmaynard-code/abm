@@ -25,9 +25,14 @@ from reporters import get_model_reporters_from_reporter_config
 
 
 class SimpleAgent(mesa.Agent):
-    """An agent with fixed initial wealth."""
+    """
+    An agent playing a Prisoner's Dilemma game with reputation, memory, and gossip dependent on model parameters
+    """
 
     def __init__(self, unique_id, model):
+        """
+        Sets the base attributes for the agent
+        """
         super().__init__(unique_id, model)
         assign_agent_base_attributes(self)
         assign_agent_reputation_attributes(self)
@@ -267,6 +272,9 @@ class SimpleAgent(mesa.Agent):
                 setattr(self, "agent_" + str(i) + "_final_reputation", agent_reputation)
 
     def get_aggregate_reporters(self):
+        """
+        Wrapper function for aggregate reporters for later analytics
+        """
         assign_aggregate_reporters(self, "agent_reputation", "var", "consensus")
         assign_aggregate_reporters(self, "agent_cooperated_proportion", "mean", "relative_cooperation")
         assign_aggregate_reporters(self, "agent_cooperated", "mean", "mean_cooperation")
@@ -275,6 +283,9 @@ class SimpleAgent(mesa.Agent):
         assign_aggregate_reporters(self, "update_dictionary", "sum", "absolute_gossip", length=True)
 
     def get_players_known_played(self):
+        """
+        Gets the number of other agents that the agent has played a game with, or have received a reputation for
+        """
         all_agents_known = []
         all_agents_played = []
         for i in range(0, self.model.num_agents):
@@ -310,7 +321,7 @@ class SimpleAgent(mesa.Agent):
     def step_update(self):
         self.set_agent_values_from_gossip()
 
-    def step_consensus(self):
+    def step_end(self):
         self.get_aggregate_reporters()
         self.get_players_known_played()
 
@@ -319,9 +330,30 @@ class SimpleAgent(mesa.Agent):
 
 
 class SimpleModel(mesa.Model):
-    """A model with some number of agents."""
+    """
+    A Prisoner's Dilemma model with a number of agents in a number of networks, treatments, and game types.
+
+    The config parameters enable reporters to be configured to streamline analysis to desired variables
+    """
 
     def __init__(self, network_groups, total_networks, treatment_ref, game_type, consensus_type, reporter_config):
+        """_summary_
+
+        Parameters
+        ----------
+        network_groups : _type_
+            _description_
+        total_networks : _type_
+            _description_
+        treatment_ref : _type_
+            _description_
+        game_type : _type_
+            _description_
+        consensus_type : _type_
+            _description_
+        reporter_config : _type_
+            _description_
+        """
         self.num_agents = network_groups * 4 * total_networks
         self.network_agents = network_groups * 4
         self.total_networks = total_networks

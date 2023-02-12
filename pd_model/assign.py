@@ -5,7 +5,7 @@ from mapping import get_neighbour_maps_by_treatment_ref
 from mapping import list_unless_value
 
 
-def assign_network_id(model, network_agents, treatment_ref):
+def assign_network_id(model, network_agents: int, treatment_ref: str):
     """
     Assigns each agent a network_id based on the total_networks using the
     get_neighbour_maps_by_treatment_ref logical mapping
@@ -31,23 +31,25 @@ def assign_network_id(model, network_agents, treatment_ref):
 
 
 def assign_neighbour_values(agent):
+    """
+    Assigns each agent values initial values for their neighbours and updates the reputation for each neighbour
+    from the agents reputation score for the column with the corresponding agent_id of the neighbour
+    This is run once in each step of the model
+    """
     current_neighbour = 1
     for i in agent.neighbours_list:
-        neighbour_column_list = [
-            "neighbour_" + str(current_neighbour),
-            "neighbour_" + str(current_neighbour) + "_AgentID",
-            "neighbour_" + str(current_neighbour) + "_reputation",
-        ]
+        current_neighbour_col = "neighbour_" + str(current_neighbour)
+        current_neighbour_id_col = "neighbour_" + str(current_neighbour) + "_AgentID"
+        current_neighbour_reputation_col = "neighbour_" + str(current_neighbour) + "_reputation"
         if agent.model.schedule.steps == 0:
             setattr(
                 agent,
-                neighbour_column_list[0],
+                current_neighbour_col,
                 [x for x in agent.model.schedule.agents if (x.network_id == agent.network_id) & (x.agent_id == i)][0],
             )
-            setattr(agent, neighbour_column_list[1], getattr(agent, neighbour_column_list[0]).unique_id)
-        reputation_column = "agent_" + str(getattr(agent, neighbour_column_list[0]).unique_id) + "_reputation"
-        if len(neighbour_column_list) == 3:
-            setattr(agent, neighbour_column_list[2], getattr(agent, reputation_column))
+            setattr(agent, current_neighbour_id_col, getattr(agent, current_neighbour_col).unique_id)
+        agent_reputation_column = "agent_" + str(getattr(agent, current_neighbour_col).unique_id) + "_reputation"
+        setattr(agent, current_neighbour_reputation_col, getattr(agent, agent_reputation_column))
         current_neighbour += 1
 
 
@@ -138,7 +140,22 @@ def assign_agent_reputation_attributes(agent):
         setattr(agent, "count_" + str(i), 0)
 
 
-def assign_aggregate_reporters(agent, variable, transformation, output_name, length: bool = False):
+def assign_aggregate_reporters(agent, variable: str, transformation: str, output_name: str, length: bool = False):
+    """
+    Assigns the aggregate reporters of the variable for session, network, and neighbour agent sets value using the specified transformation
+
+    Parameters
+    ----------
+    agent : agent in the model
+    variable : str
+        base variable name to aggregate
+    transformation : str
+        type of aggregation transformation to use: must be one of var, mean, sum
+    output_name : str
+        output varialbe name to save aggregation as
+    length : bool, optional
+        indicates whether the aggregation should be the length of the variable passed through
+    """
     session_agents = [a for a in agent.model.schedule.agents]
     network_agents = [a for a in session_agents if a.network_id == agent.network_id]
     neighbours = [a for a in network_agents if a.agent_id in agent.neighbours_list]
