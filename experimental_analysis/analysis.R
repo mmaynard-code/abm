@@ -192,7 +192,7 @@ abm_gossip_decision_distribution_by_gossip_value <- share_decision_data %>%
   relocate("freq", .after = "neighbour_share_decision") %>%
   filter(neighbour_share_decision == "Share")
 
-abm_gossip_value_distribution_by_neighbour_score <- share_decision_data %>%
+abm_gossip_decision_distribution_by_subject_score_and_target_score <- share_decision_data %>%
   filter(neighbour_share_decision != "Sharing Not Possible") %>%
   group_by(
     #treatment_ref,
