@@ -9,7 +9,7 @@ from assign import assign_neighbour_values
 from assign import assign_network_id
 from assign import assign_random_group_id
 from assign import assign_random_player_id
-from decisions import gossip_value_distribution_by_neighbour_score
+from decisions import gossip_decision_distribution_by_subject_score_and_target_score
 from decisions import neighbour_reputation_for_gossip_update
 from decisions import pd_decision_distributions_by_score
 from decisions import pd_scoring_distributions_by_payoff_result
@@ -165,7 +165,9 @@ class SimpleAgent(mesa.Agent):
                     continue
                 else:
                     current_choice = random.choice(
-                        gossip_value_distribution_by_neighbour_score.get(neighbour_reputation).get(current_reputation)
+                        gossip_decision_distribution_by_subject_score_and_target_score.get(neighbour_reputation).get(
+                            current_reputation
+                        )
                     )
                     if current_choice:
                         new_dictionary = {j: current_reputation}
