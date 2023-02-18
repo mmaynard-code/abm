@@ -119,7 +119,7 @@ update_decision_distribution_by_neighbour_score = {
     None: ([True] * 24) + ([False] * 76),
 }
 
-gossip_value_distribution_neighbour_score_none = {
+gossip_decision_distribution_target_score_none = {
     10: ([True] * 31) + ([False] * 69),
     9: ([True] * 24) + ([False] * 76),
     8: ([True] * 16) + ([False] * 84),
@@ -133,7 +133,7 @@ gossip_value_distribution_neighbour_score_none = {
     0: ([True] * 41) + ([False] * 59),
 }
 
-gossip_value_distribution_neighbour_score_0 = {
+gossip_decision_distribution_target_score_0 = {
     10: ([True] * 23) + ([False] * 77),
     9: ([True] * 16) + ([False] * 84),
     8: ([True] * 7) + ([False] * 93),
@@ -147,7 +147,7 @@ gossip_value_distribution_neighbour_score_0 = {
     0: ([True] * 28) + ([False] * 72),
 }
 
-gossip_value_distribution_neighbour_score_1 = {
+gossip_decision_distribution_target_score_1 = {
     10: ([True] * 26) + ([False] * 74),
     9: ([True] * 19) + ([False] * 81),
     8: ([True] * 6) + ([False] * 94),
@@ -161,7 +161,7 @@ gossip_value_distribution_neighbour_score_1 = {
     0: ([True] * 13) + ([False] * 87),
 }
 
-gossip_value_distribution_neighbour_score_2 = {
+gossip_decision_distribution_target_score_2 = {
     10: ([True] * 19) + ([False] * 81),
     9: ([True] * 10) + ([False] * 90),
     8: ([True] * 20) + ([False] * 80),
@@ -175,7 +175,7 @@ gossip_value_distribution_neighbour_score_2 = {
     0: ([True] * 31) + ([False] * 69),
 }
 
-gossip_value_distribution_neighbour_score_3 = {
+gossip_decision_distribution_target_score_3 = {
     10: ([True] * 35) + ([False] * 65),
     9: ([True] * 13) + ([False] * 87),
     8: ([True] * 18) + ([False] * 82),
@@ -189,7 +189,7 @@ gossip_value_distribution_neighbour_score_3 = {
     0: ([True] * 36) + ([False] * 64),
 }
 
-gossip_value_distribution_neighbour_score_4 = {
+gossip_decision_distribution_target_score_4 = {
     10: ([True] * 29) + ([False] * 71),
     9: ([True] * 12) + ([False] * 88),
     8: ([True] * 17) + ([False] * 83),
@@ -203,7 +203,7 @@ gossip_value_distribution_neighbour_score_4 = {
     0: ([True] * 37) + ([False] * 63),
 }
 
-gossip_value_distribution_neighbour_score_5 = {
+gossip_decision_distribution_target_score_5 = {
     10: ([True] * 26) + ([False] * 74),
     9: ([True] * 21) + ([False] * 79),
     8: ([True] * 18) + ([False] * 82),
@@ -217,7 +217,7 @@ gossip_value_distribution_neighbour_score_5 = {
     0: ([True] * 34) + ([False] * 66),
 }
 
-gossip_value_distribution_neighbour_score_6 = {
+gossip_decision_distribution_target_score_6 = {
     10: ([True] * 19) + ([False] * 81),
     9: ([True] * 22) + ([False] * 78),
     8: ([True] * 21) + ([False] * 79),
@@ -231,7 +231,7 @@ gossip_value_distribution_neighbour_score_6 = {
     0: ([True] * 21) + ([False] * 79),
 }
 
-gossip_value_distribution_neighbour_score_7 = {
+gossip_decision_distribution_target_score_7 = {
     10: ([True] * 28) + ([False] * 72),
     9: ([True] * 16) + ([False] * 84),
     8: ([True] * 20) + ([False] * 80),
@@ -245,7 +245,7 @@ gossip_value_distribution_neighbour_score_7 = {
     0: ([True] * 34) + ([False] * 66),
 }
 
-gossip_value_distribution_neighbour_score_8 = {
+gossip_decision_distribution_target_score_8 = {
     10: ([True] * 21) + ([False] * 79),
     9: ([True] * 18) + ([False] * 82),
     8: ([True] * 17) + ([False] * 83),
@@ -259,7 +259,7 @@ gossip_value_distribution_neighbour_score_8 = {
     0: ([True] * 18) + ([False] * 82),
 }
 
-gossip_value_distribution_neighbour_score_9 = {
+gossip_decision_distribution_target_score_9 = {
     10: ([True] * 21) + ([False] * 79),
     9: ([True] * 15) + ([False] * 85),
     8: ([True] * 14) + ([False] * 86),
@@ -273,7 +273,7 @@ gossip_value_distribution_neighbour_score_9 = {
     0: ([True] * 18) + ([False] * 82),
 }
 
-gossip_value_distribution_neighbour_score_10 = {
+gossip_decision_distribution_target_score_10 = {
     10: ([True] * 27) + ([False] * 73),
     9: ([True] * 14) + ([False] * 86),
     8: ([True] * 14) + ([False] * 86),
@@ -287,19 +287,19 @@ gossip_value_distribution_neighbour_score_10 = {
     0: ([True] * 36) + ([False] * 64),
 }
 
-gossip_value_distribution_by_neighbour_score = {
-    10: gossip_value_distribution_neighbour_score_10,
-    9: gossip_value_distribution_neighbour_score_9,
-    8: gossip_value_distribution_neighbour_score_8,
-    7: gossip_value_distribution_neighbour_score_7,
-    6: gossip_value_distribution_neighbour_score_6,
-    5: gossip_value_distribution_neighbour_score_5,
-    4: gossip_value_distribution_neighbour_score_4,
-    3: gossip_value_distribution_neighbour_score_3,
-    2: gossip_value_distribution_neighbour_score_2,
-    1: gossip_value_distribution_neighbour_score_1,
-    0: gossip_value_distribution_neighbour_score_0,
-    None: gossip_value_distribution_neighbour_score_none,
+gossip_decision_distribution_by_subject_score_and_target_score = {
+    10: gossip_decision_distribution_target_score_10,
+    9: gossip_decision_distribution_target_score_9,
+    8: gossip_decision_distribution_target_score_8,
+    7: gossip_decision_distribution_target_score_7,
+    6: gossip_decision_distribution_target_score_6,
+    5: gossip_decision_distribution_target_score_5,
+    4: gossip_decision_distribution_target_score_4,
+    3: gossip_decision_distribution_target_score_3,
+    2: gossip_decision_distribution_target_score_2,
+    1: gossip_decision_distribution_target_score_1,
+    0: gossip_decision_distribution_target_score_0,
+    None: gossip_decision_distribution_target_score_none,
 }
 
 neighbour_reputation_for_gossip_update = ([1] * 75) + ([0] * 16) + ([-1] * 9)
