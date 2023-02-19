@@ -1,13 +1,13 @@
 pd_decision_distributions_by_score = {
     10: (["Cooperate"] * 88) + (["Defect"] * 12),
     9: (["Cooperate"] * 73) + (["Defect"] * 27),
-    8: (["Cooperate"] * 69) + (["Defect"] * 31),
+    8: (["Cooperate"] * 68) + (["Defect"] * 31),
     7: (["Cooperate"] * 71) + (["Defect"] * 29),
     6: (["Cooperate"] * 62) + (["Defect"] * 38),
     5: (["Cooperate"] * 67) + (["Defect"] * 33),
     4: (["Cooperate"] * 63) + (["Defect"] * 37),
     3: (["Cooperate"] * 53) + (["Defect"] * 47),
-    2: (["Cooperate"] * 41) + (["Defect"] * 59),
+    2: (["Cooperate"] * 40) + (["Defect"] * 59),
     1: (["Cooperate"] * 32) + (["Defect"] * 68),
     0: (["Cooperate"] * 30) + (["Defect"] * 70),
     None: (["Cooperate"] * 77) + (["Defect"] * 23),
@@ -25,8 +25,8 @@ pd_scoring_distributions_by_payoff_result = {
     + ([8] * 13)
     + ([9] * 12)
     + ([10] * 24),
-    5: ([0] * 1)
-    + ([1] * 2)
+    5: ([0] * 7)
+    + ([1] * 1)
     + ([2] * 2)
     + ([3] * 2)
     + ([4] * 2)
@@ -41,23 +41,23 @@ pd_scoring_distributions_by_payoff_result = {
     + ([2] * 6)
     + ([3] * 5)
     + ([4] * 4)
-    + ([5] * 2)
+    + ([5] * 15)
     + ([6] * 4)
     + ([7] * 7)
     + ([8] * 8)
     + ([9] * 8)
     + ([10] * 20),
-    0: ([0] * 25)
-    + ([1] * 5)
+    0: ([0] * 24)
+    + ([1] * 4)
     + ([2] * 5)
     + ([3] * 5)
     + ([4] * 3)
     + ([5] * 9)
-    + ([6] * 4)
+    + ([6] * 5)
     + ([7] * 6)
-    + ([8] * 9)
+    + ([8] * 10)
     + ([9] * 7)
-    + ([10] * 22),
+    + ([10] * 21),
 }
 
 gossip_decision_distribution_by_gossip_value = {
