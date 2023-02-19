@@ -479,7 +479,9 @@ def get_neighbour_variables(df, round_number, player_id, lookup_df):
         # df.insert(34, "neighbour_3_share_low", [None])
         # df.insert(35, "neighbour_3_share_high", [None])
         for j in range(0, 11):
-            df.insert(35, f"neighbour_3_share_score_{j}", [None])
+            df.insert(35, f"neighbour_3_share_score_{j}_available", [None])
+            df.insert(35, f"neighbour_3_share_score_{j}_num", [None])
+            df.insert(35, f"neighbour_3_share_score_{j}_prop", [None])
     for i in range(0, len(neighbours)):
         neighbour_ref = i + 1
         if round_number >= 6:
@@ -511,7 +513,9 @@ def get_neighbour_variables(df, round_number, player_id, lookup_df):
                     num_score_proportion = num_score_shared / num_score_available
                 except ZeroDivisionError:
                     num_score_proportion = None
-                df.insert(35, f"neighbour_{neighbour_ref}_share_score_{j}", [num_score_proportion])
+                df.insert(35, f"neighbour_{neighbour_ref}_share_score_{j}_available", [num_score_available])
+                df.insert(35, f"neighbour_{neighbour_ref}_share_score_{j}_num", [num_score_shared])
+                df.insert(35, f"neighbour_{neighbour_ref}_share_score_{j}_prop", [num_score_proportion])
         else:
             df.insert(29, f"neighbour_{neighbour_ref}_unique_id", [None])
             df.insert(30, f"neighbour_{neighbour_ref}_post_pd_reputation", [None])
@@ -522,7 +526,9 @@ def get_neighbour_variables(df, round_number, player_id, lookup_df):
             # df.insert(34, f"neighbour_{neighbour_ref}_share_low", [None])
             # df.insert(35, f"neighbour_{neighbour_ref}_share_high", [None])
             for j in range(0, 11):
-                df.insert(35, f"neighbour_{neighbour_ref}_share_score_{j}", [None])
+                df.insert(35, f"neighbour_{neighbour_ref}_share_score_{j}_available", [None])
+                df.insert(35, f"neighbour_{neighbour_ref}_share_score_{j}_num", [None])
+                df.insert(35, f"neighbour_{neighbour_ref}_share_score_{j}_prop", [None])
     output_df = df.copy()
     return output_df
 
