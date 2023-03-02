@@ -4,29 +4,35 @@ import mesa
 import numpy as np
 from assign import assign_agent_base_attributes
 from assign import assign_agent_reputation_attributes
+from assign import assign_aggregate_reporters
 from assign import assign_neighbour_values
 from assign import assign_network_id
 from assign import assign_random_group_id
 from assign import assign_random_player_id
-from decisions import gossip_value_distribution_by_neighbour_score
+from decisions import gossip_decision_distribution_by_subject_score_and_target_score
 from decisions import neighbour_reputation_for_gossip_update
 from decisions import pd_decision_distributions_by_score
 from decisions import pd_scoring_distributions_by_payoff_result
 from decisions import update_decision_distribution_for_simple_gossip_grouped_neighbour_scores
-from mapping import list_unless_none
+from mapping import list_unless_value
 from mapping import pd_payoff_matrix
 from mapping import pd_result_matrix
 from mapping import random_group_matching
 from mapping import refactor_reputation_scores
 from mapping import stage_lists_by_game_type
-from reporters import get_agent_reporters_by_game_type
-from reporters import model_reporters_by_game_type
+from reporters import get_agent_reporters_from_reporter_config
+from reporters import get_model_reporters_from_reporter_config
 
 
 class SimpleAgent(mesa.Agent):
-    """An agent with fixed initial wealth."""
+    """
+    An agent playing a Prisoner's Dilemma game with reputation, memory, and gossip dependent on model parameters
+    """
 
     def __init__(self, unique_id, model):
+        """
+        Sets the base attributes for the agent
+        """
         super().__init__(unique_id, model)
         assign_agent_base_attributes(self)
         assign_agent_reputation_attributes(self)
@@ -60,10 +66,13 @@ class SimpleAgent(mesa.Agent):
             self.pd_decision_1 = random.choice(["Defect", "Cooperate"])
             self.pd_decision_2 = random.choice(["Defect", "Cooperate"])
         else:
-            opponent_1_reputation = getattr(self, "agent_" + str(self.pd_opponent_1.unique_id) + "_reputation")
-            opponent_2_reputation = getattr(self, "agent_" + str(self.pd_opponent_2.unique_id) + "_reputation")
-            self.pd_decision_1 = random.choice(pd_decision_distributions_by_score.get(opponent_1_reputation, None))
-            self.pd_decision_2 = random.choice(pd_decision_distributions_by_score.get(opponent_2_reputation, None))
+            pd_opponent_1_reputation = getattr(self, "agent_" + str(self.pd_opponent_1.unique_id) + "_reputation")
+            pd_opponent_2_reputation = getattr(self, "agent_" + str(self.pd_opponent_2.unique_id) + "_reputation")
+            self.pd_decision_1 = random.choice(pd_decision_distributions_by_score[pd_opponent_1_reputation])
+            self.pd_decision_2 = random.choice(pd_decision_distributions_by_score[pd_opponent_2_reputation])
+            if "pd_game" in self.model.reporter_config:
+                setattr(self, "pd_opponent_1_reputation", pd_opponent_1_reputation)
+                setattr(self, "pd_opponent_2_reputation", pd_opponent_2_reputation)
 
     def calculate_pd_payoffs(self):
         """
@@ -71,32 +80,72 @@ class SimpleAgent(mesa.Agent):
         the pd_result_matrix.
         """
         self.result_1 = pd_result_matrix[self.pd_decision_1][self.pd_opponent_1.pd_decision_1]
-        self.result_2 = pd_result_matrix[self.pd_decision_2][self.pd_opponent_1.pd_decision_2]
-        self.pd_opponent_2_pd_decision_2 = self.pd_opponent_1.pd_decision_2
+        self.result_2 = pd_result_matrix[self.pd_decision_2][self.pd_opponent_2.pd_decision_2]
         self.payoff_1 = pd_payoff_matrix[self.pd_decision_1][self.pd_opponent_1.pd_decision_1]
-        self.payoff_2 = pd_payoff_matrix[self.pd_decision_2][self.pd_opponent_1.pd_decision_2]
+        self.payoff_2 = pd_payoff_matrix[self.pd_decision_2][self.pd_opponent_2.pd_decision_2]
         self.payoff_total += self.payoff_1 + self.payoff_2
         if self.model.schedule.steps > 0:
             self.payoff_mean = (self.payoff_total / 2) / self.model.schedule.steps
         else:
             self.payoff_mean = self.payoff_total / 2
 
+    def set_cooperation_values(self):
+        current_rounds_played = getattr(self, "agent_" + str(self.pd_opponent_1_AgentID) + "_played") + 1
+        setattr(self, "agent_" + str(self.pd_opponent_1_AgentID) + "_played", current_rounds_played)
+        current_cooperation_count = getattr(self, "agent_" + str(self.pd_opponent_1_AgentID) + "_cooperated")
+
+        if self.result_1 == pd_result_matrix["Cooperate"]["Cooperate"]:
+            current_cooperation_count += 1
+            setattr(self, "agent_" + str(self.pd_opponent_1_AgentID) + "_cooperated", current_cooperation_count)
+
+        current_cooperation_proportion = current_cooperation_count / current_rounds_played
+        setattr(
+            self, "agent_" + str(self.pd_opponent_1_AgentID) + "_cooperated_proportion", current_cooperation_proportion
+        )
+
+        current_rounds_played = getattr(self, "agent_" + str(self.pd_opponent_2_AgentID) + "_played") + 1
+        setattr(self, "agent_" + str(self.pd_opponent_2_AgentID) + "_played", current_rounds_played)
+        current_cooperation_count = getattr(self, "agent_" + str(self.pd_opponent_2_AgentID) + "_cooperated")
+
+        if self.result_2 == pd_result_matrix["Cooperate"]["Cooperate"]:
+            current_cooperation_count += 1
+            setattr(self, "agent_" + str(self.pd_opponent_2_AgentID) + "_cooperated", current_cooperation_count)
+
+        current_cooperation_proportion = current_cooperation_count / current_rounds_played
+        setattr(
+            self, "agent_" + str(self.pd_opponent_1_AgentID) + "_cooperated_proportion", current_cooperation_proportion
+        )
+
     def set_pd_scoring(self):
         """
         Sets reputation scores for opponents through the selection of a random value from a probability matrix
         """
-        opponent_1_reputation = "agent_" + str(self.pd_opponent_1.unique_id) + "_reputation"
-        opponent_2_reputation = "agent_" + str(self.pd_opponent_2.unique_id) + "_reputation"
-        setattr(
-            self,
-            opponent_1_reputation,
-            int(random.choice(pd_scoring_distributions_by_payoff_result.get(self.payoff_1, None))),
-        )
-        setattr(
-            self,
-            opponent_2_reputation,
-            int(random.choice(pd_scoring_distributions_by_payoff_result.get(self.payoff_2, None))),
-        )
+        pd_opponent_1_reputation = "agent_" + str(self.pd_opponent_1.unique_id) + "_reputation"
+        pd_opponent_2_reputation = "agent_" + str(self.pd_opponent_2.unique_id) + "_reputation"
+        if self.model.game_type == "random":
+            opponent_1_score = int(random.choice(range(0, 11)))
+            opponent_2_score = int(random.choice(range(0, 11)))
+        else:
+            opponent_1_score = int(random.choice(pd_scoring_distributions_by_payoff_result.get(self.payoff_1, None)))
+            opponent_2_score = int(random.choice(pd_scoring_distributions_by_payoff_result.get(self.payoff_2, None)))
+        setattr(self, pd_opponent_1_reputation, opponent_1_score)
+        setattr(self, pd_opponent_2_reputation, opponent_2_score)
+        if self.pd_opponent_1 in self.neighbours_list:
+            current_neighbour = 1
+            for i in self.neighbours_list:
+                if self.pd_opponent_1 == i:
+                    setattr(self, "neighbour_" + str(current_neighbour) + "_reputation", opponent_1_score)
+                current_neighbour += 1
+        if self.pd_opponent_2 in self.neighbours_list:
+            current_neighbour = 1
+            for i in self.neighbours_list:
+                if self.pd_opponent_2 == i:
+                    setattr(self, "neighbour_" + str(current_neighbour) + "_reputation", opponent_2_score)
+                current_neighbour += 1
+        current_count = getattr(self, f"count_{opponent_1_score}")
+        setattr(self, f"count_{opponent_1_score}", current_count + 1)
+        current_count = getattr(self, f"count_{opponent_2_score}")
+        setattr(self, f"count_{opponent_2_score}", current_count + 1)
 
     def set_gossip_dictionary(self):
         """
@@ -105,16 +154,20 @@ class SimpleAgent(mesa.Agent):
         The gossip_dictionary contains the reputation scores that the agent is choosing to share with
         each neighbour.
         """
+        if len(self.neighbours_list) == 2:
+            setattr(self, "gossip_dictionary_3", {})
         for i in range(1, len(self.neighbours_list) + 1):
             gossip_dictionary = {}
             neighbour_reputation = getattr(self, "neighbour_" + str(i) + "_reputation")
             for j in range(0, self.model.num_agents):
                 current_reputation = getattr(self, "agent_" + str(j) + "_reputation")
-                if current_reputation is None:
+                if current_reputation is None or j == self.index_id:
                     continue
                 else:
                     current_choice = random.choice(
-                        gossip_value_distribution_by_neighbour_score.get(neighbour_reputation).get(current_reputation)
+                        gossip_decision_distribution_by_subject_score_and_target_score.get(neighbour_reputation).get(
+                            current_reputation
+                        )
                     )
                     if current_choice:
                         new_dictionary = {j: current_reputation}
@@ -149,6 +202,8 @@ class SimpleAgent(mesa.Agent):
         Sets the gossip_values for each agents' reputation score based on the update_dictionary
         """
         for i in range(0, self.model.num_agents):
+            if i == self.index_id:
+                continue
             neighbour_reputations = []
             neighbour_reputations_grouped = []
             available_gossip_values = []
@@ -218,41 +273,32 @@ class SimpleAgent(mesa.Agent):
                 setattr(self, "agent_" + str(i) + "_post_pd_reputation", agent_reputation)
                 setattr(self, "agent_" + str(i) + "_final_reputation", agent_reputation)
 
-    def get_gossip_consensus(self):
-        session_agents = [agent for agent in self.model.schedule.agents]
-        network_agents = [agent for agent in session_agents if agent.network_id == self.network_id]
-        neighbour_agents = [agent for agent in network_agents if agent.agent_id in self.neighbours_list]
-        all_session_consensus = []
-        all_network_consensus = []
-        all_neighbour_consensus = []
+    def get_aggregate_reporters(self):
+        """
+        Wrapper function for aggregate reporters for later analytics
+        """
+        assign_aggregate_reporters(self, "agent_reputation", "var", "consensus")
+        assign_aggregate_reporters(self, "agent_cooperated_proportion", "mean", "relative_cooperation")
+        assign_aggregate_reporters(self, "agent_cooperated", "mean", "mean_cooperation")
+        assign_aggregate_reporters(self, "agent_cooperated", "sum", "absolute_cooperation")
+        assign_aggregate_reporters(self, "update_dictionary", "mean", "mean_gossip", length=True)
+        assign_aggregate_reporters(self, "update_dictionary", "sum", "absolute_gossip", length=True)
+
+    def get_players_known_played(self):
+        """
+        Gets the number of other agents that the agent has played a game with, or have received a reputation for
+        """
+        all_agents_known = []
+        all_agents_played = []
         for i in range(0, self.model.num_agents):
-            session_reputation = []
-            network_reputation = []
-            neighbour_reputation = []
-            for j in session_agents:
-                current_agent_consensus = getattr(j, "agent_" + str(i) + "_reputation")
-                if self.model.consensus_type == "grouped":
-                    current_agent_consensus = refactor_reputation_scores(current_agent_consensus)
-                session_reputation += [current_agent_consensus]
-                if j in network_agents:
-                    network_reputation += [current_agent_consensus]
-                if j in neighbour_agents:
-                    neighbour_reputation += [current_agent_consensus]
-            agent_session_consensus = round(np.nanvar(list_unless_none(session_reputation)), 3)
-            agent_network_consensus = round(np.nanvar(list_unless_none(network_reputation)), 3)
-            agent_neighbour_consensus = round(np.nanvar(list_unless_none(neighbour_reputation)), 3)
-            all_session_consensus += [agent_session_consensus]
-            all_network_consensus += [agent_network_consensus]
-            all_neighbour_consensus += [agent_neighbour_consensus]
-            setattr(self, "agent_" + str(i) + "_session_consensus", agent_session_consensus)
-            setattr(self, "agent_" + str(i) + "_network_consensus", agent_network_consensus)
-            setattr(self, "agent_" + str(i) + "_neighbour_consensus", agent_neighbour_consensus)
-        session_consensus = round(np.nanmean(list_unless_none(all_session_consensus)), 3)
-        network_consensus = round(np.nanmean(list_unless_none(all_network_consensus)), 3)
-        neighbour_consensus = round(np.nanmean(list_unless_none(all_neighbour_consensus)), 3)
-        setattr(self, "session_consensus", session_consensus)
-        setattr(self, "network_consensus", network_consensus)
-        setattr(self, "neighbour_consensus", neighbour_consensus)
+            current_agent_played = getattr(self, "agent_" + str(i) + "_played")
+            current_agent_known = getattr(self, "agent_" + str(i) + "_reputation")
+            all_agents_played += [current_agent_played]
+            all_agents_known += [current_agent_known]
+        agents_played = len(list_unless_value(all_agents_played, 0))
+        agents_known = len(list_unless_value(all_agents_known))
+        setattr(self, "agents_played", agents_played)
+        setattr(self, "agents_known", agents_known)
 
     def step_start(self):
         assign_neighbour_values(self)
@@ -266,6 +312,7 @@ class SimpleAgent(mesa.Agent):
 
     def step_scoring(self):
         self.set_pd_scoring()
+        self.set_cooperation_values()
 
     def step_gossip(self):
         self.set_gossip_dictionary()
@@ -276,22 +323,45 @@ class SimpleAgent(mesa.Agent):
     def step_update(self):
         self.set_agent_values_from_gossip()
 
-    def step_consensus(self):
-        self.get_gossip_consensus()
+    def step_end(self):
+        self.get_aggregate_reporters()
+        self.get_players_known_played()
 
     def step_collect(self):
         self.model.datacollector.collect(self.model)
 
 
 class SimpleModel(mesa.Model):
-    """A model with some number of agents."""
+    """
+    A Prisoner's Dilemma model with a number of agents in a number of networks, treatments, and game types.
 
-    def __init__(self, network_groups, total_networks, treatment_ref, game_type, consensus_type):
+    The config parameters enable reporters to be configured to streamline analysis to desired variables
+    """
+
+    def __init__(self, network_groups, total_networks, treatment_ref, game_type, consensus_type, reporter_config):
+        """_summary_
+
+        Parameters
+        ----------
+        network_groups : _type_
+            _description_
+        total_networks : _type_
+            _description_
+        treatment_ref : _type_
+            _description_
+        game_type : _type_
+            _description_
+        consensus_type : _type_
+            _description_
+        reporter_config : _type_
+            _description_
+        """
         self.num_agents = network_groups * 4 * total_networks
         self.network_agents = network_groups * 4
         self.total_networks = total_networks
         self.game_type = game_type
         self.consensus_type = consensus_type
+        self.reporter_config = reporter_config
         self.schedule = mesa.time.StagedActivation(self, stage_list=stage_lists_by_game_type[game_type])
         self.running = True
         # Create agents
@@ -306,8 +376,8 @@ class SimpleModel(mesa.Model):
         assign_random_player_id(self)
 
         self.datacollector = mesa.DataCollector(
-            model_reporters=model_reporters_by_game_type[game_type],
-            agent_reporters=get_agent_reporters_by_game_type(self),
+            model_reporters=get_model_reporters_from_reporter_config(self),
+            agent_reporters=get_agent_reporters_from_reporter_config(self),
         )
 
     def step(self):
