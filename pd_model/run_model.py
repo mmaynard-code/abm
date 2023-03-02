@@ -12,10 +12,10 @@ if "aggregate" in "baseline, pd_game, aggregate":
 if __name__ == "__main__":
     freeze_support()
     all_parameter_config = {
-        "network_groups": {2},
-        "total_networks": {2},
-        "treatment_ref": {"C"},
-        "game_type": {"gossip"},
+        "network_groups": {2, 3, 4},
+        "total_networks": {2, 3, 4},
+        "treatment_ref": {"A", "B", "C"},
+        "game_type": {"random", "reputation", "gossip"},
     }
     n_iterations = 10
     n_steps = 1000
