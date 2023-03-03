@@ -66,6 +66,8 @@ baseline_reporters = {
     "count_8": "count_8",
     "count_9": "count_9",
     "count_10": "count_10",
+    "reputation_change_count": "reputation_change_count",
+    "reputation_change_count_grouped": "reputation_change_count_grouped",
 }
 
 

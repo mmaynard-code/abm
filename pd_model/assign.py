@@ -4,6 +4,8 @@ import numpy as np
 from mapping import get_neighbour_maps_by_treatment_ref
 from mapping import list_unless_value
 
+from pd_model.mapping import refactor_reputation_scores
+
 
 def assign_network_id(model, network_agents: int, treatment_ref: str):
     """
@@ -120,6 +122,8 @@ def assign_agent_base_attributes(agent):
     agent.payoff_mean = 0
     agent.result_1 = None
     agent.result_2 = None
+    agent.reputation_change_count = 0
+    agent.reputation_change_count_grouped = 0
 
 
 def assign_agent_reputation_attributes(agent):
@@ -138,6 +142,30 @@ def assign_agent_reputation_attributes(agent):
         setattr(agent, "agent_" + str(i) + "_final_reputation_grouped", None)
     for i in range(0, 11):
         setattr(agent, "count_" + str(i), 0)
+
+
+def update_reputation_change_count(agent, previous_reputation: int, current_reputation: int, grouped: bool = False):
+    """
+    Updates the reputation_change_count relevant
+
+    Parameters
+    ----------
+    agent : agent in the model
+    previous_reputation : int
+        the previous reputation to compare against
+    current_reputation : int
+        the current reputation post reputation
+    grouped : bool, optional
+        toggle to use _grouped logic
+    """
+    column_to_update = "reputation_change_count"
+    if grouped:
+        previous_reputation = refactor_reputation_scores(previous_reputation)
+        current_reputation = refactor_reputation_scores(current_reputation)
+        column_to_update = "reputation_change_count_grouped"
+    if previous_reputation != current_reputation:
+        current_update_count = getattr(agent, column_to_update)
+        setattr(agent, column_to_update, current_update_count + 1)
 
 
 def assign_aggregate_reporters(agent, variable: str, transformation: str, output_name: str, length: bool = False):

@@ -23,6 +23,8 @@ from mapping import stage_lists_by_game_type
 from reporters import get_agent_reporters_from_reporter_config
 from reporters import get_model_reporters_from_reporter_config
 
+from pd_model.assign import assign_reputation_change_count
+
 
 class SimpleAgent(mesa.Agent):
     """
@@ -122,6 +124,8 @@ class SimpleAgent(mesa.Agent):
         """
         pd_opponent_1_reputation = "agent_" + str(self.pd_opponent_1.unique_id) + "_reputation"
         pd_opponent_2_reputation = "agent_" + str(self.pd_opponent_2.unique_id) + "_reputation"
+        pre_pd_opponent_1_score = getattr(self, pd_opponent_1_reputation)
+        pre_pd_opponent_2_score = getattr(self, pd_opponent_2_reputation)
         if self.model.game_type == "random":
             opponent_1_score = int(random.choice(range(0, 11)))
             opponent_2_score = int(random.choice(range(0, 11)))
@@ -146,6 +150,10 @@ class SimpleAgent(mesa.Agent):
         setattr(self, f"count_{opponent_1_score}", current_count + 1)
         current_count = getattr(self, f"count_{opponent_2_score}")
         setattr(self, f"count_{opponent_2_score}", current_count + 1)
+        assign_reputation_change_count(self, pre_pd_opponent_1_score, opponent_1_score)
+        assign_reputation_change_count(self, pre_pd_opponent_2_score, opponent_2_score)
+        assign_reputation_change_count(self, pre_pd_opponent_1_score, opponent_1_score, grouped=True)
+        assign_reputation_change_count(self, pre_pd_opponent_2_score, opponent_2_score, grouped=True)
 
     def set_gossip_dictionary(self):
         """
@@ -272,6 +280,8 @@ class SimpleAgent(mesa.Agent):
             else:
                 setattr(self, "agent_" + str(i) + "_post_pd_reputation", agent_reputation)
                 setattr(self, "agent_" + str(i) + "_final_reputation", agent_reputation)
+            assign_reputation_change_count(self, agent_reputation, chosen_gossip_value)
+            assign_reputation_change_count(self, agent_reputation, chosen_gossip_value, grouped=True)
 
     def get_aggregate_reporters(self):
         """
