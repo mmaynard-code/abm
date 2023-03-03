@@ -3,8 +3,7 @@ import random
 import numpy as np
 from mapping import get_neighbour_maps_by_treatment_ref
 from mapping import list_unless_value
-
-from pd_model.mapping import refactor_reputation_scores
+from mapping import refactor_reputation_scores
 
 
 def assign_network_id(model, network_agents: int, treatment_ref: str):

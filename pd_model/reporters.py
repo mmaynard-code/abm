@@ -94,6 +94,12 @@ gossip_reporters = {
     "gossip_dictionary_2": "gossip_dictionary_2",
     "gossip_dictionary_3": "gossip_dictionary_3",
     "update_dictionary": "update_dictionary",
+    "session_absolute_gossip": "session_absolute_gossip",
+    "network_absolute_gossip": "network_absolute_gossip",
+    "neighbour_absolute_gossip": "neighbour_absolute_gossip",
+    "session_mean_gossip": "session_mean_gossip",
+    "network_mean_gossip": "network_mean_gossip",
+    "neighbour_mean_gossip": "neighbour_mean_gossip",
 }
 
 
@@ -110,12 +116,6 @@ aggregate_reporters = {
     "session_mean_cooperation": "session_mean_cooperation",
     "network_mean_cooperation": "network_mean_cooperation",
     "neighbour_mean_cooperation": "neighbour_mean_cooperation",
-    "session_absolute_gossip": "session_absolute_gossip",
-    "network_absolute_gossip": "network_absolute_gossip",
-    "neighbour_absolute_gossip": "neighbour_absolute_gossip",
-    "session_mean_gossip": "session_mean_gossip",
-    "network_mean_gossip": "network_mean_gossip",
-    "neighbour_mean_gossip": "neighbour_mean_gossip",
 }
 
 

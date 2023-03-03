@@ -9,6 +9,7 @@ from assign import assign_neighbour_values
 from assign import assign_network_id
 from assign import assign_random_group_id
 from assign import assign_random_player_id
+from assign import update_reputation_change_count
 from decisions import gossip_decision_distribution_by_subject_score_and_target_score
 from decisions import neighbour_reputation_for_gossip_update
 from decisions import pd_decision_distributions_by_score
@@ -22,8 +23,6 @@ from mapping import refactor_reputation_scores
 from mapping import stage_lists_by_game_type
 from reporters import get_agent_reporters_from_reporter_config
 from reporters import get_model_reporters_from_reporter_config
-
-from pd_model.assign import assign_reputation_change_count
 
 
 class SimpleAgent(mesa.Agent):
@@ -150,10 +149,10 @@ class SimpleAgent(mesa.Agent):
         setattr(self, f"count_{opponent_1_score}", current_count + 1)
         current_count = getattr(self, f"count_{opponent_2_score}")
         setattr(self, f"count_{opponent_2_score}", current_count + 1)
-        assign_reputation_change_count(self, pre_pd_opponent_1_score, opponent_1_score)
-        assign_reputation_change_count(self, pre_pd_opponent_2_score, opponent_2_score)
-        assign_reputation_change_count(self, pre_pd_opponent_1_score, opponent_1_score, grouped=True)
-        assign_reputation_change_count(self, pre_pd_opponent_2_score, opponent_2_score, grouped=True)
+        update_reputation_change_count(self, pre_pd_opponent_1_score, opponent_1_score)
+        update_reputation_change_count(self, pre_pd_opponent_2_score, opponent_2_score)
+        update_reputation_change_count(self, pre_pd_opponent_1_score, opponent_1_score, grouped=True)
+        update_reputation_change_count(self, pre_pd_opponent_2_score, opponent_2_score, grouped=True)
 
     def set_gossip_dictionary(self):
         """
@@ -280,8 +279,8 @@ class SimpleAgent(mesa.Agent):
             else:
                 setattr(self, "agent_" + str(i) + "_post_pd_reputation", agent_reputation)
                 setattr(self, "agent_" + str(i) + "_final_reputation", agent_reputation)
-            assign_reputation_change_count(self, agent_reputation, chosen_gossip_value)
-            assign_reputation_change_count(self, agent_reputation, chosen_gossip_value, grouped=True)
+            update_reputation_change_count(self, agent_reputation, chosen_gossip_value)
+            update_reputation_change_count(self, agent_reputation, chosen_gossip_value, grouped=True)
 
     def get_aggregate_reporters(self):
         """
@@ -291,8 +290,9 @@ class SimpleAgent(mesa.Agent):
         assign_aggregate_reporters(self, "agent_cooperated_proportion", "mean", "relative_cooperation")
         assign_aggregate_reporters(self, "agent_cooperated", "mean", "mean_cooperation")
         assign_aggregate_reporters(self, "agent_cooperated", "sum", "absolute_cooperation")
-        assign_aggregate_reporters(self, "update_dictionary", "mean", "mean_gossip", length=True)
-        assign_aggregate_reporters(self, "update_dictionary", "sum", "absolute_gossip", length=True)
+        if self.model.game_type == "gossip":
+            assign_aggregate_reporters(self, "update_dictionary", "mean", "mean_gossip", length=True)
+            assign_aggregate_reporters(self, "update_dictionary", "sum", "absolute_gossip", length=True)
 
     def get_players_known_played(self):
         """
