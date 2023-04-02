@@ -68,6 +68,7 @@ baseline_reporters = {
     "count_10": "count_10",
     "reputation_change_count": "reputation_change_count",
     "reputation_change_count_grouped": "reputation_change_count_grouped",
+    "neighbours_list": "neighbours_list",
 }
 
 
@@ -83,7 +84,77 @@ pd_game_reporters = {
 }
 
 
+aggregate_reporters = {
+    # "session_consensus": "session_consensus",
+    # "network_consensus": "network_consensus",
+    # "in_network_consensus": "in_network_consensus",
+    # "out_network_consensus": "out_network_consensus",
+    # "neighbour_consensus": "neighbour_consensus",
+    # "in_neighbour_consensus": "in_neighbour_consensus",
+    # "out_neighbour_consensus": "out_neighbour_consensus",
+    # "session_consensus_grouped": "session_consensus_grouped",
+    # "network_consensus_grouped": "network_consensus_grouped",
+    # "in_network_consensus_grouped": "in_network_consensus_grouped",
+    # "out_network_consensus_grouped": "out_network_consensus_grouped",
+    # "neighbour_consensus_grouped": "neighbour_consensus_grouped",
+    # "in_neighbour_consensus_grouped": "in_neighbour_consensus_grouped",
+    # "out_neighbour_consensus_grouped": "out_neighbour_consensus_grouped",
+    # "session_consensus_diff_mean": "session_consensus_diff_mean",
+    # "network_consensus_diff_mean": "network_consensus_diff_mean",
+    # "in_network_consensus_diff_mean": "in_network_consensus_diff_mean",
+    # "out_network_consensus_diff_mean": "out_network_consensus_diff_mean",
+    # "neighbour_consensus_diff_mean": "neighbour_consensus_diff_mean",
+    # "in_neighbour_consensus_diff_mean": "in_neighbour_consensus_diff_mean",
+    # "out_neighbour_consensus_diff_mean": "out_neighbour_consensus_diff_mean",
+    # "session_consensus_grouped_diff_mean": "session_consensus_grouped_diff_mean",
+    # "network_consensus_grouped_diff_mean": "network_consensus_grouped_diff_mean",
+    # "in_network_consensus_grouped_diff_mean": "in_network_consensus_grouped_diff_mean",
+    # "out_network_consensus_grouped_diff_mean": "out_network_consensus_grouped_diff_mean",
+    # "neighbour_consensus_grouped_diff_mean": "neighbour_consensus_grouped_diff_mean",
+    # "in_neighbour_consensus_grouped_diff_mean": "in_neighbour_consensus_grouped_diff_mean",
+    # "out_neighbour_consensus_grouped_diff_mean": "out_neighbour_consensus_grouped_diff_mean",
+    "session_consensus_diff_mode": "session_consensus_diff_mode",
+    "network_consensus_diff_mode": "network_consensus_diff_mode",
+    "in_network_consensus_diff_mode": "in_network_consensus_diff_mode",
+    "out_network_consensus_diff_mode": "out_network_consensus_diff_mode",
+    "neighbour_consensus_diff_mode": "neighbour_consensus_diff_mode",
+    "in_neighbour_consensus_diff_mode": "in_neighbour_consensus_diff_mode",
+    "out_neighbour_consensus_diff_mode": "out_neighbour_consensus_diff_mode",
+    # "session_consensus_grouped_diff_mode": "session_consensus_grouped_diff_mode",
+    # "network_consensus_grouped_diff_mode": "network_consensus_grouped_diff_mode",
+    # "in_network_consensus_grouped_diff_mode": "in_network_consensus_grouped_diff_mode",
+    # "out_network_consensus_grouped_diff_mode": "out_network_consensus_grouped_diff_mode",
+    # "neighbour_consensus_grouped_diff_mode": "neighbour_consensus_grouped_diff_mode",
+    # "in_neighbour_consensus_grouped_diff_mode": "in_neighbour_consensus_grouped_diff_mode",
+    # "out_neighbour_consensus_grouped_diff_mode": "out_neighbour_consensus_grouped_diff_mode",
+    "session_absolute_cooperation": "session_absolute_cooperation",
+    "network_absolute_cooperation": "network_absolute_cooperation",
+    "in_network_absolute_cooperation": "in_network_absolute_cooperation",
+    "out_network_absolute_cooperation": "out_network_absolute_cooperation",
+    "neighbour_absolute_cooperation": "neighbour_absolute_cooperation",
+    "in_neighbour_absolute_cooperation": "in_neighbour_absolute_cooperation",
+    "out_neighbour_absolute_cooperation": "out_neighbour_absolute_cooperation",
+    "session_absolute_interaction": "session_absolute_interaction",
+    "network_absolute_interaction": "network_absolute_interaction",
+    "in_network_absolute_interaction": "in_network_absolute_interaction",
+    "out_network_absolute_interaction": "out_network_absolute_interaction",
+    "neighbour_absolute_interaction": "neighbour_absolute_interaction",
+    "in_neighbour_absolute_interaction": "in_neighbour_absolute_interaction",
+    "out_neighbour_absolute_interaction": "out_neighbour_absolute_interaction",
+}
+
+
 gossip_reporters = {
+    "session_absolute_gossip": "session_absolute_gossip",
+    "network_absolute_gossip": "network_absolute_gossip",
+    "neighbour_absolute_gossip": "neighbour_absolute_gossip",
+    "session_mean_gossip": "session_mean_gossip",
+    "network_mean_gossip": "network_mean_gossip",
+    "neighbour_mean_gossip": "neighbour_mean_gossip",
+}
+
+
+gossip_agent_reporters = {
     "neighbour_1": "neighbour_1",
     "neighbour_2": "neighbour_2",
     "neighbour_3": "neighbour_3",
@@ -94,28 +165,6 @@ gossip_reporters = {
     "gossip_dictionary_2": "gossip_dictionary_2",
     "gossip_dictionary_3": "gossip_dictionary_3",
     "update_dictionary": "update_dictionary",
-    "session_absolute_gossip": "session_absolute_gossip",
-    "network_absolute_gossip": "network_absolute_gossip",
-    "neighbour_absolute_gossip": "neighbour_absolute_gossip",
-    "session_mean_gossip": "session_mean_gossip",
-    "network_mean_gossip": "network_mean_gossip",
-    "neighbour_mean_gossip": "neighbour_mean_gossip",
-}
-
-
-aggregate_reporters = {
-    "session_consensus": "session_consensus",
-    "network_consensus": "network_consensus",
-    "neighbour_consensus": "neighbour_consensus",
-    "session_relative_cooperation": "session_relative_cooperation",
-    "network_relative_cooperation": "network_relative_cooperation",
-    "neighbour_relative_cooperation": "neighbour_relative_cooperation",
-    "session_absolute_cooperation": "session_absolute_cooperation",
-    "network_absolute_cooperation": "network_absolute_cooperation",
-    "neighbour_absolute_cooperation": "neighbour_absolute_cooperation",
-    "session_mean_cooperation": "session_mean_cooperation",
-    "network_mean_cooperation": "network_mean_cooperation",
-    "neighbour_mean_cooperation": "neighbour_mean_cooperation",
 }
 
 
@@ -146,4 +195,6 @@ def get_agent_reporters_from_reporter_config(model):
                 "agent_" + str(i) + "_final_reputation": "agent_" + str(i) + "_final_reputation",
             }
             agent_reporters = {**agent_reporters, **new_reporter}
+    if "agent" in model.reporter_config and "gossip" in model.reporter_config and model.game_type == "gossip":
+        agent_reporters = {**agent_reporters, **gossip_agent_reporters}
     return agent_reporters
