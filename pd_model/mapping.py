@@ -12,6 +12,17 @@ stage_lists_by_game_type = {
         "step_end",
         "step_collect",
     ],
+    "gossip_mod": [
+        "step_start",
+        "step_pd",
+        "step_payoffs",
+        "step_scoring",
+        "step_gossip",
+        "step_reflect",
+        "step_update",
+        "step_end",
+        "step_collect",
+    ],
 }
 
 pd_payoff_matrix = {
