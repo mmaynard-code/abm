@@ -1,9 +1,20 @@
 import random
+import statistics as st
 
 import numpy as np
 from mapping import get_neighbour_maps_by_treatment_ref
 from mapping import list_unless_value
 from mapping import refactor_reputation_scores
+
+
+def nanmode(list_of_values):
+    """
+    Null safe function for calculating mode
+    """
+    if len(list_of_values) == 0:
+        return None
+    else:
+        return st.mode(list_of_values)
 
 
 def assign_network_id(model, network_agents: int, treatment_ref: str):
@@ -167,7 +178,9 @@ def update_reputation_change_count(agent, previous_reputation: int, current_repu
         setattr(agent, column_to_update, current_update_count + 1)
 
 
-def assign_aggregate_reporters(agent, variable: str, transformation: str, output_name: str, length: bool = False):
+def assign_aggregate_reporters(
+    agent, variable: str, transformation: str, output_name: str, length: bool = False, grouped: bool = False
+):
     """
     Assigns the aggregate reporters of the variable for session, network, and neighbour agent sets value using the specified transformation
 
@@ -182,6 +195,8 @@ def assign_aggregate_reporters(agent, variable: str, transformation: str, output
         output varialbe name to save aggregation as
     length : bool, optional
         indicates whether the aggregation should be the length of the variable passed through
+    grouped : bool, optional
+        specific for reputation variables and controls whether it should be refactored using refactor_reputation_scores
     """
     session_agents = [a for a in agent.model.schedule.agents]
     network_agents = [a for a in session_agents if a.network_id == agent.network_id]
@@ -189,51 +204,141 @@ def assign_aggregate_reporters(agent, variable: str, transformation: str, output
     neighbour_group_agents = [*neighbours, agent]
     all_session = []
     all_network = []
+    all_in_network = []
+    all_out_network = []
     all_neighbour = []
+    all_in_neighbour = []
+    all_out_neighbour = []
     for i in range(0, agent.model.num_agents):
         raw_session = []
         raw_network = []
+        raw_in_network = []
+        raw_out_network = []
         raw_neighbour = []
+        raw_in_neighbour = []
+        raw_out_neighbour = []
         for j in session_agents:
             if "agent" in variable:
                 variable_suffix = variable.split("_")[1]
                 variable_value = getattr(j, "agent_" + str(i) + f"_{variable_suffix}")
+                if grouped:
+                    variable_value = refactor_reputation_scores(variable_value)
             else:
                 variable_value = getattr(j, variable)
             if length:
-                variable_value = len(variable_value)
+                variable_length = 0
+                for inner_dict in variable_value.values():
+                    variable_length += len(inner_dict)
+                variable_value = variable_length
             raw_session += [variable_value]
             if j in network_agents:
                 raw_network += [variable_value]
+                if session_agents[i] in network_agents:
+                    raw_in_network += [variable_value]
+                else:
+                    raw_out_network += [variable_value]
             if j in neighbour_group_agents:
                 raw_neighbour += [variable_value]
-        if transformation == "mean":
+                if session_agents[i] in neighbour_group_agents:
+                    raw_in_neighbour += [variable_value]
+                else:
+                    raw_out_neighbour += [variable_value]
+        if transformation == "mean" or transformation == "diff_mean":
             transformed_session = round(np.nanmean(list_unless_value(raw_session)), 3)
             transformed_network = round(np.nanmean(list_unless_value(raw_network)), 3)
+            transformed_in_network = round(np.nanmean(list_unless_value(raw_in_network)), 3)
+            transformed_out_network = round(np.nanmean(list_unless_value(raw_out_network)), 3)
             transformed_neighbour = round(np.nanmean(list_unless_value(raw_neighbour)), 3)
+            transformed_in_neighbour = round(np.nanmean(list_unless_value(raw_in_neighbour)), 3)
+            transformed_out_neighbour = round(np.nanmean(list_unless_value(raw_out_neighbour)), 3)
         elif transformation == "var":
             transformed_session = round(np.nanvar(list_unless_value(raw_session)), 3)
             transformed_network = round(np.nanvar(list_unless_value(raw_network)), 3)
+            transformed_in_network = round(np.nanvar(list_unless_value(raw_in_network)), 3)
+            transformed_out_network = round(np.nanvar(list_unless_value(raw_out_network)), 3)
             transformed_neighbour = round(np.nanvar(list_unless_value(raw_neighbour)), 3)
+            transformed_in_neighbour = round(np.nanvar(list_unless_value(raw_in_neighbour)), 3)
+            transformed_out_neighbour = round(np.nanvar(list_unless_value(raw_out_neighbour)), 3)
         elif transformation == "sum":
             transformed_session = np.nansum(list_unless_value(raw_session))
             transformed_network = np.nansum(list_unless_value(raw_network))
+            transformed_in_network = np.nansum(list_unless_value(raw_in_network))
+            transformed_out_network = np.nansum(list_unless_value(raw_out_network))
             transformed_neighbour = np.nansum(list_unless_value(raw_neighbour))
+            transformed_in_neighbour = np.nansum(list_unless_value(raw_in_neighbour))
+            transformed_out_neighbour = np.nansum(list_unless_value(raw_out_neighbour))
+        elif transformation == "diff_mode":
+            transformed_session = nanmode(list_unless_value(raw_session))
+            transformed_network = nanmode(list_unless_value(raw_network))
+            transformed_in_network = nanmode(list_unless_value(raw_in_network))
+            transformed_out_network = nanmode(list_unless_value(raw_out_network))
+            transformed_neighbour = nanmode(list_unless_value(raw_neighbour))
+            transformed_in_neighbour = nanmode(list_unless_value(raw_in_neighbour))
+            transformed_out_neighbour = nanmode(list_unless_value(raw_out_neighbour))
+        if "diff" in transformation:
+            if "agent" in variable:
+                variable_suffix = variable.split("_")[1]
+                own_value = getattr(agent, "agent_" + str(i) + f"_{variable_suffix}")
+                if grouped:
+                    own_value = refactor_reputation_scores(own_value)
+            if own_value:
+                if transformed_session:
+                    transformed_session = round(np.nanvar([own_value, transformed_session]), 3)
+                if transformed_network:
+                    transformed_network = round(np.nanvar([own_value, transformed_network]), 3)
+                if transformed_in_network:
+                    transformed_in_network = round(np.nanvar([own_value, transformed_in_network]), 3)
+                if transformed_out_network:
+                    transformed_out_network = round(np.nanvar([own_value, transformed_out_network]), 3)
+                if transformed_neighbour:
+                    transformed_neighbour = round(np.nanvar([own_value, transformed_neighbour]), 3)
+                if transformed_in_neighbour:
+                    transformed_in_neighbour = round(np.nanvar([own_value, transformed_in_neighbour]), 3)
+                if transformed_out_neighbour:
+                    transformed_out_neighbour = round(np.nanvar([own_value, transformed_out_neighbour]), 3)
+            else:
+                transformed_session = None
+                transformed_network = None
+                transformed_in_network = None
+                transformed_out_network = None
+                transformed_neighbour = None
+                transformed_in_neighbour = None
+                transformed_out_neighbour = None
         all_session += [transformed_session]
         all_network += [transformed_network]
+        all_in_network += [transformed_in_network]
+        all_out_network += [transformed_out_network]
         all_neighbour += [transformed_neighbour]
-    if transformation == "mean":
+        all_in_neighbour += [transformed_in_neighbour]
+        all_out_neighbour += [transformed_out_neighbour]
+    if transformation == "mean" or "diff" in transformation:
         transformed_all_session = round(np.nanmean(list_unless_value(all_session)), 3)
         transformed_all_network = round(np.nanmean(list_unless_value(all_network)), 3)
+        transformed_all_in_network = round(np.nanmean(list_unless_value(all_in_network)), 3)
+        transformed_all_out_network = round(np.nanmean(list_unless_value(all_out_network)), 3)
         transformed_all_neighbour = round(np.nanmean(list_unless_value(all_neighbour)), 3)
+        transformed_all_in_neighbour = round(np.nanmean(list_unless_value(all_in_neighbour)), 3)
+        transformed_all_out_neighbour = round(np.nanmean(list_unless_value(all_out_neighbour)), 3)
     elif transformation == "var":
         transformed_all_session = round(np.nanvar(list_unless_value(all_session)), 3)
         transformed_all_network = round(np.nanvar(list_unless_value(all_network)), 3)
+        transformed_all_in_network = round(np.nanvar(list_unless_value(all_in_network)), 3)
+        transformed_all_out_network = round(np.nanvar(list_unless_value(all_out_network)), 3)
         transformed_all_neighbour = round(np.nanvar(list_unless_value(all_neighbour)), 3)
+        transformed_all_in_neighbour = round(np.nanvar(list_unless_value(all_in_neighbour)), 3)
+        transformed_all_out_neighbour = round(np.nanvar(list_unless_value(all_out_neighbour)), 3)
     elif transformation == "sum":
         transformed_all_session = np.nansum(list_unless_value(all_session))
         transformed_all_network = np.nansum(list_unless_value(all_network))
+        transformed_all_in_network = np.nansum(list_unless_value(all_in_network))
+        transformed_all_out_network = np.nansum(list_unless_value(all_out_network))
         transformed_all_neighbour = np.nansum(list_unless_value(all_neighbour))
+        transformed_all_in_neighbour = np.nansum(list_unless_value(all_in_neighbour))
+        transformed_all_out_neighbour = np.nansum(list_unless_value(all_out_neighbour))
     setattr(agent, f"session_{output_name}", transformed_all_session)
     setattr(agent, f"network_{output_name}", transformed_all_network)
+    setattr(agent, f"in_network_{output_name}", transformed_all_in_network)
+    setattr(agent, f"out_network_{output_name}", transformed_all_out_network)
     setattr(agent, f"neighbour_{output_name}", transformed_all_neighbour)
+    setattr(agent, f"in_neighbour_{output_name}", transformed_all_in_neighbour)
+    setattr(agent, f"out_neighbour_{output_name}", transformed_all_out_neighbour)
