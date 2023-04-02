@@ -7,3 +7,5 @@ __pycache__
 abm.Rproj
 *.html
 *.rds
+.RDataTmp1
+.RDataTmp
