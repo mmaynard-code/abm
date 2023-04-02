@@ -91,6 +91,9 @@ class SimpleAgent(mesa.Agent):
             self.payoff_mean = self.payoff_total / 2
 
     def set_cooperation_values(self):
+        """
+        Sets counts for pd games played and pd games with cooperative outcomes for opponents
+        """
         current_rounds_played = getattr(self, "agent_" + str(self.pd_opponent_1_AgentID) + "_played") + 1
         setattr(self, "agent_" + str(self.pd_opponent_1_AgentID) + "_played", current_rounds_played)
         current_cooperation_count = getattr(self, "agent_" + str(self.pd_opponent_1_AgentID) + "_cooperated")
@@ -99,11 +102,6 @@ class SimpleAgent(mesa.Agent):
             current_cooperation_count += 1
             setattr(self, "agent_" + str(self.pd_opponent_1_AgentID) + "_cooperated", current_cooperation_count)
 
-        current_cooperation_proportion = current_cooperation_count / current_rounds_played
-        setattr(
-            self, "agent_" + str(self.pd_opponent_1_AgentID) + "_cooperated_proportion", current_cooperation_proportion
-        )
-
         current_rounds_played = getattr(self, "agent_" + str(self.pd_opponent_2_AgentID) + "_played") + 1
         setattr(self, "agent_" + str(self.pd_opponent_2_AgentID) + "_played", current_rounds_played)
         current_cooperation_count = getattr(self, "agent_" + str(self.pd_opponent_2_AgentID) + "_cooperated")
@@ -111,11 +109,6 @@ class SimpleAgent(mesa.Agent):
         if self.result_2 == pd_result_matrix["Cooperate"]["Cooperate"]:
             current_cooperation_count += 1
             setattr(self, "agent_" + str(self.pd_opponent_2_AgentID) + "_cooperated", current_cooperation_count)
-
-        current_cooperation_proportion = current_cooperation_count / current_rounds_played
-        setattr(
-            self, "agent_" + str(self.pd_opponent_1_AgentID) + "_cooperated_proportion", current_cooperation_proportion
-        )
 
     def set_pd_scoring(self):
         """
@@ -211,6 +204,10 @@ class SimpleAgent(mesa.Agent):
         for i in range(0, self.model.num_agents):
             if i == self.index_id:
                 continue
+            elif (self.model.game_type == "gossip_mod") & (
+                i == self.pd_opponent_1.index_id | i == self.pd_opponent_2.index_id
+            ):
+                continue
             neighbour_reputations = []
             neighbour_reputations_grouped = []
             available_gossip_values = []
@@ -287,9 +284,13 @@ class SimpleAgent(mesa.Agent):
         Wrapper function for aggregate reporters for later analytics
         """
         assign_aggregate_reporters(self, "agent_reputation", "var", "consensus")
-        assign_aggregate_reporters(self, "agent_cooperated_proportion", "mean", "relative_cooperation")
-        assign_aggregate_reporters(self, "agent_cooperated", "mean", "mean_cooperation")
+        # assign_aggregate_reporters(self, "agent_reputation", "var", "consensus_grouped", grouped=True)
+        assign_aggregate_reporters(self, "agent_reputation", "diff_mean", "consensus_diff_mean")
+        # assign_aggregate_reporters(self, "agent_reputation", "diff_mean", "consensus_grouped_diff_mean", grouped=True)
+        assign_aggregate_reporters(self, "agent_reputation", "diff_mode", "consensus_diff_mode")
+        # assign_aggregate_reporters(self, "agent_reputation", "diff_mode", "consensus_grouped_diff_mode", grouped=True)
         assign_aggregate_reporters(self, "agent_cooperated", "sum", "absolute_cooperation")
+        assign_aggregate_reporters(self, "agent_played", "sum", "absolute_interaction")
         if self.model.game_type == "gossip":
             assign_aggregate_reporters(self, "update_dictionary", "mean", "mean_gossip", length=True)
             assign_aggregate_reporters(self, "update_dictionary", "sum", "absolute_gossip", length=True)
