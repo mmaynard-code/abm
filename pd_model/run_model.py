@@ -1,5 +1,6 @@
 # import matplotlib.pyplot as plt
 # mypy: ignore-errors
+from multiprocessing import cpu_count
 from multiprocessing import freeze_support
 
 import mesa
@@ -12,13 +13,13 @@ if "aggregate" in "baseline, pd_game, aggregate":
 if __name__ == "__main__":
     freeze_support()
     all_parameter_config = {
-        "network_groups": {2, 3, 4},
-        "total_networks": {2, 3, 4},
+        "network_groups": {2, 3},
+        "total_networks": {4},
         "treatment_ref": {"A", "B", "C"},
-        "game_type": {"random", "reputation", "gossip"},
+        "game_type": {"gossip", "reputation"},
     }
-    n_iterations = 10
-    n_steps = 1000
+    n_iterations = 100
+    n_steps = 400
 
     # noqa
     combinations = n_iterations
@@ -28,7 +29,7 @@ if __name__ == "__main__":
     print(
         f"Running {str(combinations)} simulations of {str(n_steps)} steps. {str(combinations * n_steps)} steps in total."
     )
-
+    print(cpu_count())
     for values in all_parameter_config.get("network_groups"):
         network_groups = values
         for values in all_parameter_config.get("total_networks"):
@@ -43,7 +44,7 @@ if __name__ == "__main__":
                         "treatment_ref": {treatment_ref},
                         "game_type": {game_type},
                         "consensus_type": {"grouped"},
-                        "reporter_config": {"baseline, pd_game, aggregate"},
+                        "reporter_config": {"baseline, pd_game, aggregate, gossip"},
                     }
                     print(parameter_config)
                     parameter_filename = f"result_{network_groups}_{total_networks}_{treatment_ref}_{game_type}"
@@ -52,7 +53,7 @@ if __name__ == "__main__":
                         parameters=parameter_config,
                         iterations=n_iterations,
                         max_steps=n_steps,
-                        number_processes=None,
+                        number_processes=cpu_count() - 4,
                         data_collection_period=1,
                         display_progress=True,
                     )
@@ -62,6 +63,6 @@ if __name__ == "__main__":
                     print(results_df.columns)
                     print("Writing results to csv file.")
 
-                    # results_df.to_csv(f"{parameter_filename}.csv")
+                    results_df.to_csv(f"{parameter_filename}.csv")
 
                     print("Completed.")

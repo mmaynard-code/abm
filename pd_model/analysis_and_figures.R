@@ -85,6 +85,7 @@ transform_abm_variables = function(dataframe, group_type) {
               mean_gossip = mean(mean_gossip, na.rm=TRUE) / max(normalise_change),
               change_count = ifelse(group_type == "neighbour", sum(reputation_change_count), sum(reputation_change_count) / max(normalise_change)),
               change_count_grouped = ifelse(group_type == "neighbour", sum(reputation_change_count), sum(reputation_change_count_grouped) / max(normalise_change)),
+              payoff_mean = mean(payoff_mean),
               played = mean(agents_played),
               known = mean(agents_known),
               normalise = max(normalise),
@@ -143,9 +144,9 @@ transform_abm_variables = function(dataframe, group_type) {
 }
 
 # Get the list of output files from the ABM to read in
-file_list = list.files(pattern = "(result)\\_.*")
-
-# Produces session-level analytical variable outputs
+# file_list = list.files(pattern = "(result)\\_.*")
+#
+# # Produces session-level analytical variable outputs
 # all_session_df = foreach(i=1:length(file_list), .combine=rbind, .packages=c("dplyr", "stringr", "foreach", "doParallel", "glue")) %dopar% {
 #   input_df = prepare_abm_output(file_list[i], "session")
 #   output_df = foreach(j= seq(min(input_df$iteration),max(input_df$iteration),1), .combine=rbind, .packages=c("dplyr", "stringr", "glue")) %dopar% {
@@ -169,7 +170,7 @@ file_list = list.files(pattern = "(result)\\_.*")
 #   }
 # }
 #
-# # Produces neighbour-level analytical variable outputs
+# # # Produces neighbour-level analytical variable outputs
 # all_neighbour_df = foreach(i=1:length(file_list), .combine=rbind, .packages=c("dplyr", "stringr", "foreach", "doParallel")) %dopar% {
 #   input_df = prepare_abm_output(file_list[i], "neighbour")
 #   output_df = foreach(j=min(input_df$iteration):max(input_df$iteration), .combine=rbind, .packages=c("dplyr", "foreach", "doParallel")) %dopar% {
@@ -420,7 +421,7 @@ in_group_df <- all_df %>%
   left_join(all_known_lookup_by_game_type, by=c("game_type", "total_networks", "network_size")) %>%
   select(-ends_with(".y")) %>%
   filter(round_number <= round_limit & group != "session") %>%
-  mutate(group = glue('in_{group}')) %>%
+  mutate(group = paste0('in_',group)) %>%
   rename_all(~ stringr::str_remove(.x, "_in")) %>%
   rename(normalised_interaction = normalisedteraction_in)
 
@@ -429,7 +430,7 @@ out_group_df <- all_df %>%
   left_join(all_known_lookup_by_game_type, by=c("game_type", "total_networks", "network_size")) %>%
   select(-ends_with(".y")) %>%
   filter(round_number <= round_limit & group != "session") %>%
-  mutate(group = glue('out_{group}')) %>%
+  mutate(group = paste0('out_',group)) %>%
   rename_all(~ stringr::str_remove(.x, "_out"))
 
 group_session_df <- all_session_df %>%
@@ -438,10 +439,22 @@ group_session_df <- all_session_df %>%
   select(-ends_with(".y"), names(out_group_df)) %>%
   filter(round_number <= round_limit)
 
-hypothesis_group_df <- bind_rows(in_group_df, out_group_df, group_session_df)  %>%
+group_network_df <- all_network_df %>%
+  select(-all_played, -all_known) %>%
+  left_join(all_known_lookup_by_game_type, by=c("game_type", "total_networks", "network_size")) %>%
+  select(-ends_with(".y"), names(out_group_df)) %>%
+  filter(round_number <= round_limit)
+
+group_neighbour_df <- all_neighbour_df %>%
+  select(-all_played, -all_known) %>%
+  left_join(all_known_lookup_by_game_type, by=c("game_type", "total_networks", "network_size")) %>%
+  select(-ends_with(".y"), names(out_group_df)) %>%
+  filter(round_number <= round_limit)
+
+hypothesis_group_df <- bind_rows(in_group_df, out_group_df, group_session_df, group_network_df, group_neighbour_df)  %>%
   mutate(
     gossip = ifelse(group %in% c("in_neighbour", "out_neighbour"), gossip / (neighbours + 1), gossip),
-    group = factor(group, levels = c("session", "out_network", "in_network", "out_neighbour", "in_neighbour"))) %>%
+    group = factor(group, levels = c("session", "network", "out_network", "in_network", "neighbour", "out_neighbour", "in_neighbour"))) %>%
   group_by(game_type, treatment_ref, network_size, total_networks, round_number, group) %>%
   summarise(consensus = mean(consensus, na.rm=T),
             consensus_grouped = mean(consensus_grouped, na.rm=T),
@@ -468,27 +481,90 @@ hypothesis_session_df <- hypothesis_all_df %>%
 # H1 - the consensus is positively correlated with the frequency of gossip sharing within the group
 
 h1_fig_df <- hypothesis_group_df %>%
-  filter(game_type == "Gossip"
-         & group != "out_neighbour"
-         ) %>%
-  mutate(group = recode(group, "in_network" = "network", "out_network" = "network", "in_neighbour" = "neighbour"))
+  filter(game_type == "Gossip" )
+
+h1_fig_a_df <- h1_fig_df %>%
+  filter(group %in% c("session", "network", "neighbour"))
 
 range = c(0, 800)
-h1_fig_a <- ggplot(data = h1_fig_df, aes(x = gossip)) +
-  geom_point(aes(y = consensus_diff_mode, color = group), alpha = 0.33) +
+h1_fig_a <- ggplot(data = h1_fig_a_df, aes(x = gossip)) +
+  geom_point(aes(y = consensus, color = group), alpha = 0.33) +
   #geom_smooth(aes(y = consensus_diff_mode, color = group)) +
   #geom_vline(aes(xintercept=all_known), colour= "red") +
   #geom_vline(aes(xintercept=all_played), colour = "red") +
   facet_wrap(facets = vars(game_type, network_size, total_networks, treatment_ref), ncol=9) +
   theme_minimal() +
-  labs(y = "Mean Agent Reputation Variance From Group Mode",
+  labs(y = "Mean Reputation Variance Within Group",
        x = "Normalised Absolute Gossip Per Agent",
        color = "Treatment") +
   theme(axis.text.x = element_text(angle = 45))
 
 h1_fig_a
 
-h1_fig_b <- ggplot(data = h1_fig_df, aes(x = gossip / played)) +
+h1_fig_bc_df <- h1_fig_df %>%
+  filter(!group %in% c("network", "neighbour")) %>%
+  mutate(group = recode(group, "in_network" = "network", "in_neighbour" = "neighbour"))%>%
+  filter(group %in% c("session", "network", "neighbour"))
+
+unique(h1_fig_bc_df$group)
+
+h1_fig_b <- ggplot(data = h1_fig_bc_df, aes(x = gossip)) +
+  geom_point(aes(y = consensus_diff_mean, color = group), alpha = 0.33) +
+  #geom_smooth(aes(y = consensus_diff_mode, color = group)) +
+  #geom_vline(aes(xintercept=all_known), colour= "red") +
+  #geom_vline(aes(xintercept=all_played), colour = "red") +
+  facet_wrap(facets = vars(game_type, network_size, total_networks, treatment_ref), ncol=9) +
+  theme_minimal() +
+  labs(y = "Mean Agent Reputation Variance From Group Mean",
+       x = "Normalised Absolute Gossip Per Agent",
+       color = "Treatment") +
+  theme(axis.text.x = element_text(angle = 45))
+
+h1_fig_b
+
+h1_fig_c <- ggplot(data = h1_fig_bc_df, aes(x = gossip)) +
+  geom_point(aes(y = consensus_diff_mode, color = group), alpha = 0.33) +
+  #geom_smooth(aes(y = consensus_diff_mode, color = group)) +
+  #geom_vline(aes(xintercept=all_known), colour= "red") +
+  #geom_vline(aes(xintercept=all_played), colour = "red") +
+  facet_wrap(facets = vars(game_type, network_size, total_networks, treatment_ref), ncol=9) +
+  theme_minimal() +
+  labs(y = "Mean Agent Reputation Variance Within Group",
+       x = "Normalised Absolute Gossip Per Agent",
+       color = "Treatment") +
+  theme(axis.text.x = element_text(angle = 45))
+
+h1_fig_c
+
+h1_fig_d <- ggplot(data = h1_fig_bc_df, aes(x = gossip / played)) +
+  geom_point(aes(y = consensus, color = group), alpha = 0.33) +
+  geom_smooth(aes(y = consensus, color = group)) +
+  #geom_vline(aes(xintercept=all_known), colour= "red") +
+  #geom_vline(aes(xintercept=all_played), colour = "red") +
+  facet_wrap(facets = vars(game_type, network_size, total_networks, treatment_ref), ncol=9) +
+  theme_minimal() +
+  labs(y = "Mean Agent Reputation Variance From Group Mean",
+       x = "Absolute Gossip / Players Known",
+       color = "Treatment") +
+  theme(axis.text.x = element_text(angle = 45))
+
+h1_fig_d
+
+h1_fig_e <- ggplot(data = h1_fig_bc_df, aes(x = gossip / played)) +
+  geom_point(aes(y = consensus_diff_mean, color = group), alpha = 0.33) +
+  geom_smooth(aes(y = consensus_diff_mean, color = group)) +
+  #geom_vline(aes(xintercept=all_known), colour= "red") +
+  #geom_vline(aes(xintercept=all_played), colour = "red") +
+  facet_wrap(facets = vars(game_type, network_size, total_networks, treatment_ref), ncol=9) +
+  theme_minimal() +
+  labs(y = "Mean Agent Reputation Variance From Group Mode",
+       x = "Absolute Gossip / Players Known",
+       color = "Treatment") +
+  theme(axis.text.x = element_text(angle = 45))
+
+h1_fig_e
+
+h1_fig_f <- ggplot(data = h1_fig_bc_df, aes(x = gossip / played)) +
   geom_point(aes(y = consensus_diff_mode, color = group), alpha = 0.33) +
   geom_smooth(aes(y = consensus_diff_mode, color = group)) +
   #geom_vline(aes(xintercept=all_known), colour= "red") +
@@ -500,7 +576,7 @@ h1_fig_b <- ggplot(data = h1_fig_df, aes(x = gossip / played)) +
        color = "Treatment") +
   theme(axis.text.x = element_text(angle = 45))
 
-h1_fig_b
+h1_fig_f
 
 h2_fig_df <- hypothesis_group_df %>%
   filter(group == "session")
@@ -523,7 +599,7 @@ h2_fig_b <- ggplot(data=h2_fig_df, aes(x=treatment_ref)) +
   #geom_smooth(aes(y=cooperation, colour=group)) +
   facet_wrap(facets = vars(game_type, network_size, total_networks), ncol=9) +
   theme_minimal() +
-  labs(y = "Mean Agent Reputation Variance From Session Mean",
+  labs(y = "Mean Agent Reputation Variance From Group Mean",
        x = "Treatment Ref",
        color = element_blank()) +
   theme(axis.text.x = element_text(angle = 45)) +
@@ -536,14 +612,98 @@ h2_fig_c <- ggplot(data=h2_fig_df, aes(x=treatment_ref)) +
   #geom_smooth(aes(y=cooperation, colour=group)) +
   facet_wrap(facets = vars(game_type, network_size, total_networks), ncol=9) +
   theme_minimal() +
-  labs(y = "Mean Agent Reputation Variance From Session Mode",
+  labs(y = "Mean Agent Reputation Variance From Group Mode",
        x = "Treatment Ref",
        color = element_blank()) +
   theme(axis.text.x = element_text(angle = 45))
 
 h2_fig_c
 
-h3_h4_fig_a <- ggplot(data=hypothesis_group_df, aes(x=treatment_ref)) +
+h3_df <- hypothesis_group_df %>%
+  filter(group %in% c("in_neighbour", "out_neighbour"))
+
+h3_fig_a<- ggplot(data=h3_df, aes(x=treatment_ref)) +
+  geom_boxplot(aes(y=consensus, colour = group), outlier.alpha = 0.1) +
+  #geom_boxplot(aes(y=consensus), alpha = 0.01, outlier.alpha = 0) +
+  #geom_smooth(aes(y=cooperation, colour=group)) +
+  facet_wrap(facets = vars(game_type, network_size, total_networks), ncol=9) +
+  theme_minimal() +
+  labs(y = "Mean Reputation Variance Within Group",
+       x = "Treatment Ref",
+       color = element_blank()) +
+  theme(axis.text.x = element_text(angle = 45))
+
+h3_fig_a
+
+h3_fig_b <- ggplot(data=h3_df, aes(x=treatment_ref)) +
+  geom_boxplot(aes(y=consensus_diff_mean, colour = group), outlier.alpha = 0.1) +
+  #geom_boxplot(aes(y=consensus_diff_mean), alpha = 0.01, outlier.alpha = 0) +
+  #geom_smooth(aes(y=cooperation, colour=group)) +
+  facet_wrap(facets = vars(game_type, network_size, total_networks), ncol=9) +
+  theme_minimal() +
+  labs(y = "Mean Agent Reputation Variance From Group Mean",
+       x = "Treatment Ref",
+       color = element_blank()) +
+  theme(axis.text.x = element_text(angle = 45))
+
+h3_fig_b
+
+h3_fig_c <- ggplot(data=h3_df, aes(x=treatment_ref)) +
+  geom_boxplot(aes(y=consensus_diff_mode, colour = group), outlier.alpha = 0.1) +
+  #geom_boxplot(aes(y=consensus_diff_mode), alpha = 0.01, outlier.alpha = 0) +
+  #geom_smooth(aes(y=cooperation, colour=group)) +
+  facet_wrap(facets = vars(game_type, network_size, total_networks), ncol=9) +
+  theme_minimal() +
+  labs(y = "Mean Agent Reputation Variance From Group Mode",
+       x = "Treatment Ref",
+       color = element_blank()) +
+  theme(axis.text.x = element_text(angle = 45))
+
+h3_fig_c
+
+h4_df <- hypothesis_group_df %>%
+  filter(group %in% c("in_network", "out_network"))
+
+h4_fig_a<- ggplot(data=h4_df, aes(x=treatment_ref)) +
+  geom_boxplot(aes(y=consensus, colour = group), outlier.alpha = 0.1) +
+  #geom_boxplot(aes(y=consensus), alpha = 0.01, outlier.alpha = 0) +
+  #geom_smooth(aes(y=cooperation, colour=group)) +
+  facet_wrap(facets = vars(game_type, network_size, total_networks), ncol=9) +
+  theme_minimal() +
+  labs(y = "Mean Reputation Variance Within Group",
+       x = "Treatment Ref",
+       color = element_blank()) +
+  theme(axis.text.x = element_text(angle = 45))
+
+h4_fig_a
+
+h4_fig_b <- ggplot(data=h4_df, aes(x=treatment_ref)) +
+  geom_boxplot(aes(y=consensus_diff_mean, colour = group), outlier.alpha = 0.1) +
+  #geom_boxplot(aes(y=consensus_diff_mean), alpha = 0.01, outlier.alpha = 0) +
+  #geom_smooth(aes(y=cooperation, colour=group)) +
+  facet_wrap(facets = vars(game_type, network_size, total_networks), ncol=9) +
+  theme_minimal() +
+  labs(y = "Mean Agent Reputation Variance From Group Mean",
+       x = "Treatment Ref",
+       color = element_blank()) +
+  theme(axis.text.x = element_text(angle = 45))
+
+h4_fig_b
+
+h4_fig_c <- ggplot(data=h4_df, aes(x=treatment_ref)) +
+  geom_boxplot(aes(y=consensus_diff_mode, colour = group), outlier.alpha = 0.1) +
+  #geom_boxplot(aes(y=consensus_diff_mode), alpha = 0.01, outlier.alpha = 0) +
+  #geom_smooth(aes(y=cooperation, colour=group)) +
+  facet_wrap(facets = vars(game_type, network_size, total_networks), ncol=9) +
+  theme_minimal() +
+  labs(y = "Mean Agent Reputation Variance From Group Mode",
+       x = "Treatment Ref",
+       color = element_blank()) +
+  theme(axis.text.x = element_text(angle = 45))
+
+h4_fig_c
+
+h3_h4_fig_a <- ggplot(data=h3_df, aes(x=treatment_ref)) +
   geom_boxplot(aes(y=consensus, colour = group), outlier.alpha = 0.1) +
   #geom_boxplot(aes(y=consensus), alpha = 0.01, outlier.alpha = 0) +
   #geom_smooth(aes(y=cooperation, colour=group)) +
@@ -562,7 +722,7 @@ h3_h4_fig_b <- ggplot(data=hypothesis_group_df, aes(x=treatment_ref)) +
   #geom_smooth(aes(y=cooperation, colour=group)) +
   facet_wrap(facets = vars(game_type, network_size, total_networks), ncol=9) +
   theme_minimal() +
-  labs(y = "Mean Agent Reputation Variance\nAgainst Group Mean Reputation",
+  labs(y = "Mean Agent Reputation Variance From Group Mean",
        x = "Treatment Ref",
        color = element_blank()) +
   theme(axis.text.x = element_text(angle = 45))
@@ -575,7 +735,7 @@ h3_h4_fig_c <- ggplot(data=hypothesis_group_df, aes(x=treatment_ref)) +
   #geom_smooth(aes(y=cooperation, colour=group)) +
   facet_wrap(facets = vars(game_type, network_size, total_networks), ncol=9) +
   theme_minimal() +
-  labs(y = "Mean Agent Reputation Variance\nAgainst Group Mode Reputation",
+  labs(y = "Mean Agent Reputation Variance From Group Mode",
        x = "Treatment Ref",
        color = element_blank()) +
   theme(axis.text.x = element_text(angle = 45))
@@ -583,7 +743,7 @@ h3_h4_fig_c <- ggplot(data=hypothesis_group_df, aes(x=treatment_ref)) +
 h3_h4_fig_c
 
 h5_fig_df = hypothesis_group_df %>%
-  filter(as.character(group) %in% c("in_neighbour", "out_neighbour", "session") & game_type != "Random")
+  filter(as.character(group) %in% c("out_neighbour", "in_neighbour"))
 
 h5_fig <- ggplot(data=h5_fig_df, aes(x=treatment_ref)) +
   #geom_boxplot(aes(y=cooperation_level), alpha = 0.01, outlier.alpha = 0) +
@@ -594,13 +754,13 @@ h5_fig <- ggplot(data=h5_fig_df, aes(x=treatment_ref)) +
   labs(y = "Absolute Cooperative Interactions\nNormalised by Number of Agents in Group",
        x = "Treatment Ref",
        color = element_blank()) +
-  theme(axis.text.x = element_text(angle = 45)) +
-  ylim(0.45, 0.6)
+  ylim(0.2, 0.6) +
+  theme(axis.text.x = element_text(angle = 45))
 
 h5_fig
 
 h6_fig_df = hypothesis_group_df %>%
-  filter(as.character(group) %in% c("in_network", "out_network", "session") & game_type != "Random")
+  filter(as.character(group) %in% c("in_network", "out_network"))
 
 h6_fig <- ggplot(data=h6_fig_df, aes(x=treatment_ref)) +
   #geom_boxplot(aes(y=cooperation_level), alpha = 0.01, outlier.alpha = 0) +
@@ -611,13 +771,13 @@ h6_fig <- ggplot(data=h6_fig_df, aes(x=treatment_ref)) +
   labs(y = "Absolute Cooperative Interactions\nNormalised by Number of Agents in Group",
        x = "Treatment Ref",
        color = element_blank()) +
-  theme(axis.text.x = element_text(angle = 45)) +
-  ylim(0.45, 0.6)
+  ylim(0.2, 0.6) +
+  theme(axis.text.x = element_text(angle = 45))
 
 h6_fig
 
 h5_6_fig_a <- ggplot(data=hypothesis_group_df, aes(x=treatment_ref)) +
-  geom_boxplot(aes(y=cooperation_level), alpha = 0.01, outlier.alpha = 0) +
+  #geom_boxplot(aes(y=cooperation_level), alpha = 0.01, outlier.alpha = 0) +
   geom_boxplot(aes(y=cooperation_level, colour = group), alpha = 0.01, outlier.alpha = 0.1) +
   #geom_smooth(aes(y=cooperation, colour=group)) +
   facet_wrap(facets = vars(game_type, network_size, total_networks), ncol=9) +

@@ -9,3 +9,5 @@ abm.Rproj
 *.rds
 .RDataTmp1
 .RDataTmp
+pd_model/analysis_and_figures.Rmd
+.RDataTmp2

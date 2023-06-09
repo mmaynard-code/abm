@@ -57,7 +57,7 @@ pd_scoring_fig.show()
 pd_scoring_fig.write_html("experimental_analysis/figures/pd_scoring_fig.html")
 
 share_decision_data = pd.read_csv("share_decision_data.csv")
-share_decision_fig = px.histogram(
+share_decision_neighbour_fig = px.histogram(
     share_decision_data,
     x="neighbour_post_pd_reputation",
     range_y=[0, 2000],
@@ -81,9 +81,37 @@ share_decision_fig = px.histogram(
     },
     title="Player Share Decision by Neighbour Reputation",
 )
-share_decision_fig.update_xaxes(type="category")
-share_decision_fig.show()
-share_decision_fig.write_html("experimental_analysis/figures/share_decision_fig.html")
+share_decision_neighbour_fig.update_xaxes(type="category")
+share_decision_neighbour_fig.show()
+share_decision_neighbour_fig.write_html("experimental_analysis/figures/share_decision_neighbour_fig.html")
+
+share_decision_score_fig = px.histogram(
+    share_decision_data,
+    x="neighbour_post_pd_reputation",
+    range_y=[0, 2000],
+    color="neighbour_share_decision",
+    # barnorm="percent",
+    facet_col="treatment_ref",
+    marginal="box",
+    color_discrete_sequence=px.colors.qualitative.Set3,
+    category_orders=dict(
+        neighbour_share_decision=["Share", "Won't share", "Can't share"],
+        treatment_ref=["A", "B", "C"],
+        neighbour_post_pd_reputation=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+        neighbour_share_number=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+        neighbour_share_low=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+        neighbour_share_high=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+    ),
+    labels={
+        "neighbour_share_decision": "Share Decision",
+        "neighbour_post_pd_reputation": "Neighbour Reputation",
+        "treatment_ref": "Network Type",
+    },
+    title="Player Share Decision by Neighbour Reputation",
+)
+share_decision_score_fig.update_xaxes(type="category")
+share_decision_score_fig.show()
+share_decision_score_fig.write_html("experimental_analysis/figures/share_decision_score_fig.html")
 
 update_decision_data = pd.read_csv("update_decision_data_filtered_simple_gossip.csv")
 update_decision_gossip_sender_reputation_fig = px.histogram(
